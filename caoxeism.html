@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>红军长征 · 翻越夹金山 · 4K 极致画质</title>
+<script src="./three.min.js"></script>
+<script>if(typeof THREE==="undefined"){document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')}</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"SimSun","宋体",serif}
+#gameCanvas{display:block;width:100%;height:100%}
+#loadingScreen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1s}
+#loadingText{color:#c9a96e;font-size:18px;letter-spacing:4px;margin-bottom:20px}
+#loadingBar{width:200px;height:3px;background:#2a2a2a;border-radius:2px;overflow:hidden}
+#loadingBarInner{width:0%;height:100%;background:#c9a96e;transition:width 0.3s}
+#topBar{position:fixed;top:0;left:0;right:0;height:44px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:linear-gradient(180deg,rgba(0,0,0,0.6) 0%,transparent 100%)}
+#gameTime{color:#d4c4a8;font-size:13px;letter-spacing:1px;text-shadow:1px 1px 3px #000}
+#terrainInfo{text-align:right}
+#terrainName{color:#c9a96e;font-size:15px;font-weight:bold;text-shadow:1px 1px 3px #000}
+#altitude{color:#a09070;font-size:11px;text-shadow:1px 1px 3px #000}
+#compass{position:fixed;top:48px;right:12px;width:64px;height:64px;z-index:100}
+#statusBars{position:fixed;top:48px;left:12px;z-index:100;display:flex;flex-direction:column;gap:4px}
+.statusBar{display:flex;align-items:center;gap:4px}
+.statusLabel{color:#d4c4a8;font-size:10px;width:36px;text-shadow:1px 1px 3px #000;letter-spacing:1px}
+.barContainer{width:80px;height:9px;border:1px solid #5c4033;border-radius:2px;background:rgba(0,0,0,0.55);overflow:hidden}
+.barFill{height:100%;transition:width 0.3s}
+#coldBar{background:linear-gradient(90deg,#4a90d9,#87CEEB)}
+#staminaBar{background:linear-gradient(90deg,#8B4513,#CD853F)}
+#tempBar{background:linear-gradient(90deg,#8B0000,#ff4444)}
+#distanceBox{position:fixed;top:46%;left:12px;z-index:100}
+#cpGuide{position:fixed;top:53%;left:12px;z-index:100;display:none}
+#cpLabel{color:#a09070;font-size:10px;text-shadow:1px 1px 3px #000;letter-spacing:1px}
+#cpName{color:#c9a96e;font-size:15px;font-weight:bold;text-shadow:1px 1px 3px #000;margin:1px 0}
+#cpDist{color:#d4c4a8;font-size:11px;text-shadow:1px 1px 3px #000}
+#cpDist b{color:#ffd98a;font-size:14px}
+#cpArrow{color:#c9a96e;font-size:11px;text-shadow:1px 1px 3px #000;margin-top:2px}
+#distLabel{color:#a09070;font-size:10px;text-shadow:1px 1px 3px #000}
+#distValue{color:#c9a96e;font-size:16px;font-weight:bold;text-shadow:1px 1px 3px #000}
+#ancientMap{position:fixed;bottom:150px;left:12px;width:90px;height:90px;border:2px solid #8B4513;border-radius:5px;background:rgba(40,25,10,0.6);overflow:hidden;box-shadow:0 0 8px rgba(139,69,19,0.4),inset 0 0 10px rgba(0,0,0,0.4);z-index:100}
+#mapCanvas{width:100%;height:100%}
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;z-index:50;pointer-events:none}
+#crosshair::before,#crosshair::after{content:"";position:absolute;background:rgba(255,255,255,0.5)}
+#crosshair::before{width:1.5px;height:14px;left:50%;transform:translateX(-50%)}
+#crosshair::after{width:14px;height:1.5px;top:50%;transform:translateY(-50%)}
+#joystickArea{position:fixed;bottom:18px;left:18px;width:110px;height:110px;z-index:150;touch-action:none}
+#joystickBase{position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(100,80,60,0.3);border:2px solid rgba(180,160,130,0.35);top:10px;left:10px}
+#joystickKnob{position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(220,200,170,0.55);border:2px solid rgba(220,200,170,0.85);top:37px;left:37px}
+#jumpBtn{position:fixed;bottom:25px;right:22px;width:56px;height:56px;border-radius:50%;background:rgba(100,80,60,0.3);border:2px solid rgba(180,160,130,0.35);z-index:150;display:flex;align-items:center;justify-content:center;touch-action:none}
+#jumpBtn::after{content:"";width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:17px solid rgba(220,200,170,0.75)}
+#jumpBtn:active{background:rgba(100,80,60,0.5)}
+#sprintBtn{position:fixed;bottom:25px;right:90px;width:44px;height:44px;border-radius:50%;background:rgba(100,80,60,0.3);border:2px solid rgba(180,160,130,0.35);z-index:150;display:flex;align-items:center;justify-content:center;color:rgba(220,200,170,0.75);font-size:11px;touch-action:none}
+#sprintBtn:active{background:rgba(100,80,60,0.5)}
+#frostOverlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:40;opacity:0;transition:opacity 0.5s;background:radial-gradient(ellipse at center,transparent 40%,rgba(200,220,255,0.2) 100%)}
+#breathFog{position:fixed;bottom:28%;left:50%;transform:translateX(-50%);width:70px;height:45px;pointer-events:none;z-index:45;opacity:0;transition:opacity 0.3s}
+#dayNightOverlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:35;opacity:0;transition:opacity 2s;background:#0d0d2b;mix-blend-mode:multiply}
+#sunGlow{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:36;opacity:0;transition:opacity 2s;background:radial-gradient(ellipse at 50% 85%,rgba(255,180,60,0.4) 0%,transparent 55%)}
+#filmOverlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:37;opacity:0.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+#vignetteOverlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:38;box-shadow:inset 0 0 150px rgba(0,0,0,0.5)}
+#subtitleContainer{position:fixed;top:0;left:0;right:0;bottom:0;display:none;justify-content:center;align-items:center;z-index:200;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px)}
+#subtitleText{color:#fff;font-size:16px;line-height:2;text-align:center;max-width:560px;padding:25px;text-shadow:2px 2px 5px rgba(0,0,0,0.9);font-family:"SimSun","宋体",serif;letter-spacing:2px;opacity:0;animation:fadeIn 2.5s forwards}
+@keyframes fadeIn{to{opacity:1}}
+
+/* ==== 4K 设置面板 ==== */
+#settingsPanel{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background:rgba(6,8,14,0.88);display:flex;align-items:center;justify-content:center;font-family:"SimSun","宋体",serif;backdrop-filter:blur(6px)}
+#settingsBox{width:min(560px,92vw);max-height:92vh;overflow-y:auto;background:linear-gradient(160deg,#141a26,#0d1018);border:1px solid #5c4033;border-radius:10px;padding:22px 26px;color:#d4c4a8;box-shadow:0 12px 60px rgba(0,0,0,0.7)}
+#settingsBox h1{font-size:20px;letter-spacing:6px;color:#c9a96e;text-align:center;margin-bottom:2px}
+#settingsBox .sub{text-align:center;font-size:11px;color:#8a7a60;margin-bottom:16px;letter-spacing:2px}
+.presetRow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.presetBtn{padding:10px 4px;border:1px solid #4a3a28;border-radius:6px;background:#1a2030;color:#b8a888;font-size:13px;text-align:center;cursor:pointer;letter-spacing:2px;transition:all .15s}
+.presetBtn small{display:block;font-size:10px;color:#7a6a50;margin-top:4px;letter-spacing:0}
+.presetBtn:hover{border-color:#c9a96e}
+.presetBtn.active{border-color:#c9a96e;background:#2a2416;color:#ffd98a;box-shadow:0 0 12px rgba(201,169,110,0.25)}
+.setRow{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:12px}
+.setRow label{width:76px;color:#a89878;letter-spacing:1px}
+.setRow input[type=range]{flex:1;accent-color:#c9a96e}
+.setRow .val{width:64px;text-align:right;color:#ffd98a;font-size:11px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,#5c4033,transparent);margin:14px 0}
+#applyBtn{display:block;width:100%;margin-top:16px;padding:12px;border:1px solid #c9a96e;border-radius:6px;background:linear-gradient(180deg,#3a2c14,#241a0c);color:#ffd98a;font-size:15px;letter-spacing:8px;cursor:pointer;font-family:inherit}
+#applyBtn:hover{background:linear-gradient(180deg,#4a3a1c,#2a2010)}
+#gearBtn{position:fixed;left:12px;bottom:118px;z-index:200;width:34px;height:34px;border-radius:50%;border:1px solid #5c4033;background:rgba(0,0,0,0.5);color:#c9a96e;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="loadingScreen"><div id="loadingText">正在翻越夹金山 · 加载 4K 极致画质...</div><div id="loadingBar"><div id="loadingBarInner"></div></div></div>
+<div id="gameCanvas"></div>
+<div id="topBar"><div id="topLeft"><div id="gameTime">06:00</div></div><div id="terrainInfo"><div id="terrainName">夹金山麓</div><div id="altitude">海拔 2800m</div></div></div>
+<div id="compass"><canvas id="compassCanvas" width="64" height="64"></canvas></div>
+<div id="statusBars">
+<div class="statusBar"><span class="statusLabel">寒冷</span><div class="barContainer"><div class="barFill" id="coldBar" style="width:0%"></div></div></div>
+<div class="statusBar"><span class="statusLabel">体力</span><div class="barContainer"><div class="barFill" id="staminaBar" style="width:100%"></div></div></div>
+<div class="statusBar"><span class="statusLabel">体温</span><div class="barContainer"><div class="barFill" id="tempBar" style="width:50%"></div></div></div>
+</div>
+<div id="distanceBox"><div id="distLabel">距山顶</div><div id="distValue">2000m</div></div>
+<div id="cpGuide"><div id="cpLabel">下一个检查点</div><div id="cpName">烧鸡窝</div><div id="cpDist">还有 <b>0</b> 米</div><div id="cpArrow">↑ 向正北</div></div>
+<div id="ancientMap"><canvas id="mapCanvas" width="90" height="90"></canvas></div>
+<div id="crosshair"></div>
+<div id="joystickArea"><div id="joystickBase"></div><div id="joystickKnob"></div></div>
+<div id="jumpBtn"></div>
+<div id="sprintBtn">冲</div>
+<div id="frostOverlay"></div>
+<canvas id="breathFog" width="70" height="45"></canvas>
+<div id="dayNightOverlay"></div>
+<div id="sunGlow"></div>
+<div id="filmOverlay"></div>
+<div id="vignetteOverlay"></div>
+<div id="subtitleContainer"><div id="subtitleText"></div></div>
+
+<div id="settingsPanel"><div id="settingsBox">
+<h1>翻越夹金山</h1><div class="sub">4K 极致画质 · 画质设置</div>
+<div class="presetRow">
+ <div class="presetBtn" data-t="0">极致 4K<small>4K渲染·8K阴影</small></div>
+ <div class="presetBtn" data-t="1">高<small>2K渲染·4K阴影</small></div>
+ <div class="presetBtn" data-t="2">中<small>均衡</small></div>
+ <div class="presetBtn" data-t="3">流畅<small>低配友好</small></div>
+</div>
+<div class="divider"></div>
+<div class="setRow"><label>分辨率倍率</label><input type="range" id="sRes" min="0.5" max="2" step="0.05" value="1"><span class="val" id="sResV">1.00x</span></div>
+<div class="setRow"><label>阴影精度</label><input type="range" id="sSh" min="1024" max="8192" step="1024" value="4096"><span class="val" id="sShV">4096</span></div>
+<div class="setRow"><label>地形精度</label><input type="range" id="sCr" min="96" max="192" step="32" value="160"><span class="val" id="sCrV">160</span></div>
+<div class="setRow"><label>渲染距离</label><input type="range" id="sRd" min="5" max="13" step="1" value="11"><span class="val" id="sRdV">11</span></div>
+<div class="setRow"><label>雪粒子量</label><input type="range" id="sSn" min="1000" max="12000" step="500" value="9000"><span class="val" id="sSnV">9000</span></div>
+<div class="setRow"><label>植被距离</label><input type="range" id="sVd" min="2" max="8" step="1" value="6"><span class="val" id="sVdV">6</span></div>
+<div class="divider"></div>
+<div style="font-size:10px;color:#7a6a50;line-height:1.7">自定义滑杆会自动切换到"自定义"模式。修改地形精度/渲染距离等结构参数需重启页面生效(自动)。当前设置保存在本机。</div>
+<button id="applyBtn">应 用 并 进 入</button>
+</div></div>
+<div id="gearBtn">⚙</div>
+<script>
+(function(){
+var KEY='jjj4k_settings_v1';
+var TI=[{dprCap:2,shadow:8192,chunkRes:192,renderDist:13,snowMax:12000,vegDist:11,chunkPerFrame:4,resScale:2.0,chunkBudget:52000},
+        {dprCap:2,shadow:4096,chunkRes:160,renderDist:11,snowMax:9000,vegDist:9,chunkPerFrame:3,resScale:1.0,chunkBudget:34000},
+        {dprCap:2,shadow:2048,chunkRes:128,renderDist:9,snowMax:6000,vegDist:8,chunkPerFrame:2,resScale:0.85,chunkBudget:22000},
+        {dprCap:1.5,shadow:1024,chunkRes:96,renderDist:7,snowMax:3500,vegDist:6,chunkPerFrame:2,resScale:0.7,chunkBudget:15000}];
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY));return (s&&typeof s.t==='number')?s:null;}catch(e){return null;}}
+window.__jjjLoadSettings=function(){
+  var s=load(); if(!s) return null;
+  if(s.t>=0&&s.t<4) return {custom:false,values:TI[s.t],name:['极致 4K','高','中','流畅'][s.t]};
+  return {custom:true,name:'自定义',values:{dprCap:2,shadow:s.sh,chunkRes:s.cr,renderDist:s.rd,snowMax:s.sn,vegDist:s.vd,chunkPerFrame:2,resScale:s.res,chunkBudget:26000}};
+};
+// ---- UI ----
+var panel=document.getElementById('settingsPanel');
+var cur=load()||{t:-1,res:1,sh:4096,cr:160,rd:11,sn:9000,vd:6};
+var presetBtns=[].slice.call(document.querySelectorAll('.presetBtn'));
+function syncUI(){
+  presetBtns.forEach(function(b){b.classList.toggle('active',+b.dataset.t===cur.t);});
+  document.getElementById('sRes').value=cur.res;document.getElementById('sResV').textContent=(+cur.res).toFixed(2)+'x';
+  document.getElementById('sSh').value=cur.sh;document.getElementById('sShV').textContent=cur.sh;
+  document.getElementById('sCr').value=cur.cr;document.getElementById('sCrV').textContent=cur.cr;
+  document.getElementById('sRd').value=cur.rd;document.getElementById('sRdV').textContent=cur.rd;
+  document.getElementById('sSn').value=cur.sn;document.getElementById('sSnV').textContent=cur.sn;
+  document.getElementById('sVd').value=cur.vd;document.getElementById('sVdV').textContent=cur.vd;
+}
+presetBtns.forEach(function(b){b.addEventListener('click',function(){cur.t=+b.dataset.t;var v=TI[cur.t];
+  cur.res=v.resScale;cur.sh=v.shadow;cur.cr=v.chunkRes;cur.rd=v.renderDist;cur.sn=v.snowMax;cur.vd=v.vegDist;syncUI();});});
+[['sRes','res',1],['sSh','sh',0],['sCr','cr',0],['sRd','rd',0],['sSn','sn',0],['sVd','vd',0]].forEach(function(cfg){
+  var el=document.getElementById(cfg[0]);
+  el.addEventListener('input',function(){cur.t=-1;cur[cfg[1]]=+el.value;syncUI();});
+});
+document.getElementById('applyBtn').addEventListener('click',function(){
+  localStorage.setItem(KEY,JSON.stringify(cur));
+  var first=!load()||JSON.stringify(load())!==JSON.stringify(cur);
+  if(first){location.reload();}else{panel.style.display='none';}
+});
+document.getElementById('gearBtn').addEventListener('click',function(){panel.style.display='flex';syncUI();});
+syncUI();
+})();
+</script>
+<script>
+const loadingScreen=document.getElementById('loadingScreen');
+const loadingBarInner=document.getElementById('loadingBarInner');
+function setLoad(p){loadingBarInner.style.width=p+'%';}
+
+// ==================== [真实感] 共享 GLSL: ACES 电影级色调映射 + 色彩空间 ====================
+// 自绘 shader(天空/地形/云)统一走与 three 内置材质相同的 ACES 曲线,
+// 这是"雪面不发死白、暗部有层次"的关键: 高光被压缩出细节, 而不是被硬截断。
+const GLSL_TONEMAP=`
+// [致命修复] 函数名必须加唯一前缀:
+// three 在开启 ACES 色调映射时, 会自行把 tonemapping_pars_fragment 插进来,
+// 其中已定义了 RRTAndODTFit / ACESFilmicToneMapping 等。这里若用同名函数,
+// 会导致 "function redefined" -> 着色器编译失败 -> 地形整个不渲染(只剩树飘着)。
+const mat3 jACES_IN=mat3(
+    vec3(0.59719,0.07600,0.02840),
+    vec3(0.35458,0.90834,0.13383),
+    vec3(0.04823,0.01566,0.83777));
+const mat3 jACES_OUT=mat3(
+    vec3( 1.60475,-0.10208,-0.00327),
+    vec3(-0.53108, 1.10813,-0.07276),
+    vec3(-0.07367,-0.00605, 1.07602));
+vec3 jsrgb2lin(vec3 c){return pow(max(c,vec3(0.0)),vec3(2.2));}
+vec3 jlin2srgb(vec3 c){return pow(max(c,vec3(0.0)),vec3(1.0/2.2));}
+vec3 jRRTAndODTFit(vec3 v){
+    vec3 a=v*(v+0.0245786)-0.000090537;
+    vec3 b=v*(0.983729*v+0.4329510)+0.238081;
+    return a/b;
+}
+vec3 jACESFilm(vec3 c, float exposure){
+    c*=exposure/0.6;
+    c=jACES_IN*c; c=jRRTAndODTFit(c); c=jACES_OUT*c;
+    return clamp(c,0.0,1.0);
+}
+`;
+
+// ==================== Realistic Noise ====================
+class SimplexNoise{
+    constructor(seed){
+        this.p=new Uint8Array(256);this.perm=new Uint8Array(512);this.permMod12=new Uint8Array(512);
+        for(let i=0;i<256;i++)this.p[i]=i;
+        let s=seed||Math.random()*65536;
+        const rand=()=>{s=(s*16807)%2147483647;return(s-1)/2147483646};
+        for(let i=255;i>0;i--){const r=Math.floor(rand()*(i+1));[this.p[i],this.p[r]]=[this.p[r],this.p[i]]}
+        for(let i=0;i<512;i++){this.perm[i]=this.p[i&255];this.permMod12[i]=this.perm[i]%12}
+        this.grad3=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+    }
+    noise2D(xin,yin){
+        const F2=0.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6;
+        let s=(xin+yin)*F2,i=Math.floor(xin+s),j=Math.floor(yin+s),t=(i+j)*G2,X0=i-t,Y0=j-t,x0=xin-X0,y0=yin-Y0;
+        let i1,j1;if(x0>y0){i1=1;j1=0}else{i1=0;j1=1}
+        let x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2,ii=i&255,jj=j&255;
+        let gi0=this.permMod12[ii+this.perm[jj]],gi1=this.permMod12[ii+i1+this.perm[jj+j1]],gi2=this.permMod12[ii+1+this.perm[jj+1]];
+        let t0=0.5-x0*x0-y0*y0,t1=0.5-x1*x1-y1*y1,t2=0.5-x2*x2-y2*y2,n=0;
+        if(t0>=0){t0*=t0;n+=t0*t0*(this.grad3[gi0][0]*x0+this.grad3[gi0][1]*y0)}
+        if(t1>=0){t1*=t1;n+=t1*t1*(this.grad3[gi1][0]*x1+this.grad3[gi1][1]*y1)}
+        if(t2>=0){t2*=t2;n+=t2*t2*(this.grad3[gi2][0]*x2+this.grad3[gi2][1]*y2)}
+        return 70*n;
+    }
+    noise3D(x,y,z){
+        // Simple 3D noise from 3 separate 2D lookups
+        const xy=this.noise2D(x,y);
+        const yz=this.noise2D(y+37,z-13);
+        const xz=this.noise2D(x+17,z+43);
+        return (xy+yz+xz)/3;
+    }
+}
+function fbm2D(noise,x,y,octaves,lacunarity,gain){
+    let total=0,amplitude=1,frequency=1,maxValue=0;
+    for(let i=0;i<octaves;i++){total+=noise.noise2D(x*frequency,y*frequency)*amplitude;maxValue+=amplitude;amplitude*=gain;frequency*=lacunarity}
+    return total/maxValue;
+}
+function fbm3D(noise,x,y,z,octaves,lacunarity,gain){
+    let total=0,amplitude=1,frequency=1,maxValue=0;
+    for(let i=0;i<octaves;i++){total+=noise.noise3D(x*frequency,y*frequency,z*frequency)*amplitude;maxValue+=amplitude;amplitude*=gain;frequency*=lacunarity}
+    return total/maxValue;
+}
+function hash2(x,z){return Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453%1);}
+function hash3(x,y,z){return Math.abs(Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453%1);}
+
+// ==================== Constants ====================
+// 世界单位: 1 unit = 5 米;h*5+2500 = 海拔米
+const CHUNK_SIZE=64, WORLD_SEED=1935;
+let CHUNK_RES=160, RENDER_DISTANCE=11;   // 由设备档位 PERF 在启动时覆盖
+
+// ==================== 设备档位 & 自适应性能 ====================
+// 原则: 能力之内一律给最高画质; 仅在性能不足时按"最不易察觉"的顺序降级
+const PERF={tier:0,name:'极致 4K',dprCap:2,shadow:8192,chunkRes:192,renderDist:13,snowMax:12000,vegDist:11,chunkPerFrame:4,resScale:2.0,chunkBudget:52000};
+(function initDeviceTier(){
+    // [4K] 用户设置优先(设置面板写入 localStorage), 其次自动检测
+    const saved=window.__jjjLoadSettings?window.__jjjLoadSettings():null;
+    if(saved){
+        Object.assign(PERF,saved.values);
+        PERF.tier=saved.custom?4:saved.values.tier!==undefined?saved.values.tier:0;
+        if(saved.custom)PERF.tier=4;
+        PERF.name=saved.name;
+    }else{
+        const ua=navigator.userAgent||'';
+        const isMobile=/Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile|Silk/i.test(ua);
+        const cores=navigator.hardwareConcurrency||4;
+        const mem=navigator.deviceMemory||(isMobile?4:8);
+        let t;
+        if(!isMobile)               t=(cores>=8&&mem>=8)?0:1;
+        else if(cores>=8&&mem>=6)   t=1;
+        else if(cores>=6)           t=2;
+        else                        t=3;
+        const T=[
+            {tier:0,name:'极致 4K',dprCap:2,shadow:8192,chunkRes:192,renderDist:13,snowMax:12000,vegDist:11,chunkPerFrame:4,resScale:2.0,chunkBudget:52000},
+            {tier:1,name:'高',  dprCap:2,  shadow:4096,chunkRes:160,renderDist:11,snowMax:9000, vegDist:9,chunkPerFrame:3,resScale:1.0,chunkBudget:34000},
+            {tier:2,name:'中',  dprCap:2,  shadow:2048,chunkRes:128,renderDist:9, snowMax:6000, vegDist:8,chunkPerFrame:2,resScale:0.85,chunkBudget:22000},
+            {tier:3,name:'流畅',dprCap:1.5,shadow:1024,chunkRes:96, renderDist:7, snowMax:3500, vegDist:6,chunkPerFrame:2,resScale:0.7,chunkBudget:15000}
+        ];
+        Object.assign(PERF,T[t]);
+    }
+    CHUNK_RES=PERF.chunkRes;
+    RENDER_DISTANCE=PERF.renderDist;
+})();
+// [修复] 旧值 400 = 4500m, 但玩家路线最高只到 4095m(垭口) —— 全程 0% 有雪,
+// 山看着就是一堆绿土。真实夹金山: 垭口 4114m 盛夏也可能飞雪, 山腰已见积雪。
+// 雪线定在 3400m, 走到半山(z≈1100)开始出现雪斑, 垭口一带白雪连片。
+const SNOW_HEIGHT=100;       // 3000m 雪线(与检查点1"3000米出现积雪"的描述一致)
+const MOUNTAIN_PASS=2000;    // 垭口 z 位置
+const MOUNTAIN_PEAK=MOUNTAIN_PASS;  // [FIX] 山顶 z(原文件只引用未定义, 会导致每帧抛异常)
+const PLAYER_HEIGHT=2.2, GRAVITY=32, JUMP_FORCE=10;
+const BASE_SPEED=5.5, SPRINT_SPEED=9;
+const DAY_DURATION=300;
+
+// ==================== Game State ====================
+const gameState={
+    cold:0,maxCold:100,stamina:100,maxStamina:100,bodyTemp:37,maxBodyTemp:42,minBodyTemp:30,
+    isMoving:false,isSprinting:false,isGrounded:false,jumpCooldown:0,
+    velocity:new THREE.Vector3(),position:new THREE.Vector3(100,50,100),
+    rotation:new THREE.Euler(0,0,0),reachedSummit:false,gameStarted:false,
+    time:0,dayTime:0.25,terrainName:'夹金山麓',
+    weatherId:'clear',weatherTimer:60,totalWeatherChanges:0,
+    // [地面积雪] 当前积雪量 0~1(下雪累积 / 天晴消融), melt 控制残雪的斑驳程度
+    snowAccum:0.42, snowMelt:0.0,
+    reachedCheckpoints:new Set()
+};
+
+const CHECKPOINTS=[
+    {id:1, x:100, z:700,  name:'烧鸡窝', desc:'海拔约 3000 米,山路渐陡,灌木丛中出现积雪。'},
+    {id:2, x:100, z:1300, name:'一支箭', desc:'海拔约 3500 米,陡峭狭窄山脊,两侧悬崖。'},
+    {id:3, x:100, z:2000, name:'垭口 · 王母寨', desc:'海拔 4114 米,红旗飘扬,会师在望。'}
+];
+const FIRES=[
+    {x:100, z:500,  lit:true},
+    {x:100, z:1000, lit:true},
+    {x:100, z:1600, lit:true}
+];
+const FLAGS=[
+    {x:100, z:700,  scale:1.0, isBig:false},
+    {x:100, z:1300, scale:1.0, isBig:false},
+    {x:100, z:2000, scale:1.6, isBig:true}
+];
+
+setLoad(8);
+
+// ==================== Three.js Setup (MAX Quality) ====================
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x6a9ad0);
+
+const camera=new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 5000);
+camera.position.copy(gameState.position);
+
+const renderer=new THREE.WebGLRenderer({
+    antialias:true,
+    powerPreference:"high-performance",
+    stencil:false
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, PERF.dprCap));  // [3K] 档位决定上限, 后续自适应微调
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;   // [3K] 软阴影(PCF)
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+renderer.sortObjects=true;  // [3K] 半透明/云层正确排序
+renderer.outputEncoding=THREE.sRGBEncoding;
+if(renderer.physicallyCorrectLights!==undefined) renderer.physicallyCorrectLights=true;
+document.getElementById('gameCanvas').appendChild(renderer.domElement);
+
+setLoad(15);
+
+// ==================== Atmosphere (Rayleigh-inspired fog) ====================
+// Custom fog with altitude-based color shift (aerial perspective)
+scene.fog=new THREE.FogExp2(0xa8c8e0, 0.0008);
+
+const sunDir=new THREE.Vector3(0.3,0.7,0.4).normalize();
+const moonDir=new THREE.Vector3(-0.4,0.5,-0.3).normalize();
+
+// ==================== Lights (Strong sun + sky hemisphere) ====================
+// 半球光:从天空蓝到地面褐的真实环境光
+const hemiLight=new THREE.HemisphereLight(0xa8c8e0, 0x3a2a1a, 0.62);   // [真实感] 配合 ACES 重新标定(原 1.2 会让阴影发灰)
+scene.add(hemiLight);
+
+// 主光:暖黄阳光(强光,带阴影)
+const sunLight=new THREE.DirectionalLight(0xfff0d4, 1.85);   // [真实感] 原 3.5 在 ACES 下会把雪面推成死白
+sunLight.position.set(120, 250, 80);
+sunLight.castShadow=true;
+sunLight.shadow.mapSize.width=PERF.shadow;    // [3K] 档位决定(最高 8K)
+sunLight.shadow.mapSize.height=PERF.shadow;
+sunLight.shadow.camera.near=1;
+sunLight.shadow.camera.far=900;       // [3K] 缩小远平面提高深度精度
+sunLight.shadow.camera.left=-260;     // [3K] 聚焦玩家周围
+sunLight.shadow.camera.right=260;
+sunLight.shadow.camera.top=260;
+sunLight.shadow.camera.bottom=-260;
+sunLight.shadow.bias=-0.00012;        // [3K] 更紧 bias
+sunLight.shadow.normalBias=0.05;
+sunLight.shadow.radius=4.5;           // [3K] 更柔和的 PCF 软边
+scene.add(sunLight);
+
+// 反射光:雪山反射到阴影侧
+const fillLight=new THREE.DirectionalLight(0xc8d8f0, 0.32);
+fillLight.position.set(-100, 100, -100);
+scene.add(fillLight);
+
+setLoad(22);
+
+// ==================== Custom Sky Dome (Real Rayleigh Scattering) ====================
+// 基于大气散射的简模:深蓝 zenith,地平线偏白,日光金光,夜星月
+const skyUniforms={
+    uSunDir:{value:sunDir.clone()},
+    uMoonDir:{value:moonDir.clone()},
+    uSunIntensity:{value:1.0},
+    uSunColor:{value:new THREE.Color(0xfff2d4)},
+    uZenith:{value:new THREE.Color(0x1e5fc4)},
+    uHorizon:{value:new THREE.Color(0xc8d8e8)},
+    uGround:{value:new THREE.Color(0x3a2a1a)},
+    uTime:{value:0},
+    uStars:{value:0.0},
+    uMoonAlpha:{value:0.0},
+    uNight:{value:0.0},           // [FIX-夜黑碎片] 夜晚把天穹地底色抬成月光蓝灰
+    uSunSize:{value:0.0085},
+    uSunGlow:{value:380.0},
+    uHalo:{value:1.4},
+    // === [3K] 金霞山脉(golden-hour cirrus / 霞光)控制 ===
+    uGolden:{value:0.0},
+    uGoldenColor:{value:new THREE.Color(0xffb060)},
+    uCirrus:{value:0.6},
+    uTurbidity:{value:2.2}
+};
+
+const skyDome=new THREE.Mesh(
+    new THREE.SphereGeometry(3500, 64, 32),
+    new THREE.ShaderMaterial({
+        uniforms:skyUniforms,
+        side:THREE.BackSide,
+        depthWrite:false,
+        fog:false,
+        vertexShader:`
+            varying vec3 vDir;
+            void main(){
+                vDir=normalize(position);
+                gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
+                gl_Position.z=gl_Position.w;
+            }
+        `,
+        fragmentShader:`
+            ${GLSL_TONEMAP}
+            varying vec3 vDir;
+            uniform vec3 uSunDir,uMoonDir,uSunColor;
+            uniform vec3 uZenith,uHorizon,uGround;
+            uniform float uSunIntensity,uSunSize,uSunGlow,uHalo;
+            uniform float uTime,uStars,uMoonAlpha,uNight;
+            // === [3K] 金霞 uniform ===
+            uniform float uGolden,uCirrus,uTurbidity;
+            uniform vec3  uGoldenColor;
+
+            float hash(vec2 p){p=fract(p*vec2(123.34,345.45));p+=dot(p,p+34.345);return fract(p.x*p.y);}
+            float vnoise(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),u.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),u.x),u.y);}
+            float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<7;i++){v+=a*vnoise(p);p=p*2.07+7.3;a*=0.5;}return v;}  // [3K] 7 八度
+            float hash3(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+
+            // [3K] 完整 Rayleigh + Mie 大气散射
+            vec3 atmosphere(vec3 dir, vec3 sunDir){
+                float cosTheta=dot(dir, sunDir);
+                float rayleighPhase=0.75*(1.0+cosTheta*cosTheta);
+                float g=0.76;
+                float miePhase=1.5*((1.0-g*g)*(1.0+cosTheta*cosTheta))/(2.0+g*g)*pow(1.0+g*g-2.0*g*cosTheta, 1.5);
+                vec3 betaR=vec3(0.0058, 0.0135, 0.0331);
+                vec3 betaM=vec3(0.004, 0.004, 0.004)*uTurbidity;
+                float airmass=1.0/max(dir.y, 0.03);
+                airmass=mix(airmass, 1.0, 0.35);
+                vec3 extR=exp(-betaR*airmass*4.0);
+                vec3 extM=exp(-betaM*airmass*4.0);
+                vec3 inscatter=(betaR*rayleighPhase*extR + betaM*miePhase*extM);
+                return inscatter*vec3(0.55,0.72,1.05)*2.2;
+            }
+
+            void main(){
+                vec3 v=normalize(vDir);
+                float h=v.y;
+                float cosTheta=h;
+
+                // [3K] 大气散射基色
+                vec3 col=mix(uHorizon, uZenith, pow(max(h,0.0), 0.5));
+                // [FIX-夜黑碎片] 地底(地平线以下)色: 白天保持深棕(被地形挡住看不见),
+                // 夜晚抬升为月光蓝灰 —— 地形渲染距离之外露出的天穹下半球
+                // 与夜雾同色, 不再是一块死黑"假山体"
+                vec3 nightGround=mix(uGround, vec3(0.135,0.175,0.26), uNight);
+                col=mix(nightGround, col, smoothstep(-0.3, 0.03, h));
+                // 夜晚地平线以下再向夜色雾色靠一点, 彻底抹平"黑洞"对比
+                col=mix(col, vec3(0.135,0.175,0.26), (1.0-smoothstep(-0.3,0.0,h))*uNight*0.55);
+                col+=atmosphere(v, uSunDir)*uSunIntensity;
+
+                // 太阳
+                float sd=max(dot(v,uSunDir),0.0);
+                // 太阳光盘(锐利)
+                float sang=acos(clamp(sd,0.0,1.0));
+                float disk=1.0-smoothstep(uSunSize*0.55,uSunSize*1.15,sang);
+                vec3 sunDiskCol=mix(uSunColor, uGoldenColor, uGolden*0.7);
+                col+=sunDiskCol*disk*6.0*uSunIntensity;
+                // 日光弥散(halo) + [3K] 金霞核心
+                col+=mix(uSunColor, uGoldenColor, uGolden)*pow(sd,uSunGlow)*uHalo*uSunIntensity;
+                col+=uGoldenColor*pow(sd, 60.0)*uGolden*2.5;
+                col+=uGoldenColor*pow(max(1.0-abs(h),0.0), 8.0)*uGolden*1.1;  // [金霞] 地平线暖带
+                // 大气光晕(贴近太阳的亮带)
+                float atmosHalo=pow(max(dot(normalize(vec3(v.x,0.0,v.z)), normalize(vec3(uSunDir.x,0.0,uSunDir.z))),0.0),8.0);
+                col+=uSunColor*atmosHalo*0.3*uSunIntensity;
+
+                // 月亮
+                if(uMoonAlpha>0.001){
+                    float md=max(dot(v,uMoonDir),0.0);
+                    float mang=acos(clamp(md,0.0,1.0));
+                    float mdisk=1.0-smoothstep(0.018,0.024,mang);
+                    col+=vec3(0.95,0.96,1.0)*mdisk*1.6*uMoonAlpha;
+                    col+=vec3(0.4,0.45,0.6)*pow(max(dot(v,uMoonDir),0.0), 200.0)*0.6*uMoonAlpha;
+                }
+
+                // 星空
+                if(uStars>0.001 && h>0.0){
+                    vec3 ip=floor(v*320.0);
+                    float sh=hash3(ip);
+                    float star=smoothstep(0.996,1.0,sh);
+                    star*=0.75+0.25*sin(uTime*2.0+sh*100.0);
+                    star*=smoothstep(0.0,0.3,h);
+                    vec3 starCol=mix(vec3(0.85,0.9,1.0), vec3(1.0,0.85,0.7), hash3(ip+1.7));
+                    col+=starCol*star*uStars*1.4;
+                    // [3K] 银河带
+                    float galaxy=smoothstep(0.4,0.9,fbm(vec2(atan(v.x,v.z)*2.0, h*3.0)))*smoothstep(0.05,0.45,h);
+                    col+=vec3(0.25,0.2,0.35)*galaxy*uStars*0.35;
+                }
+
+                // [3K] 云层 + 金霞卷云(cirrus) + 低空暖雾
+                float cloudH=smoothstep(0.02, 0.45, h);
+                if(cloudH>0.0){
+                    vec2 cuv=v.xz/(max(h,0.08))*2.0;
+                    float cn=fbm(cuv*0.55);
+                    float ccd=smoothstep(0.42, 0.72, cn)*cloudH;
+                    float facingCloud=smoothstep(-0.1,0.7,dot(normalize(vec3(v.x,0.25,v.z)),uSunDir));
+                    vec3 cloudCol=mix(vec3(0.85,0.87,0.92), uGoldenColor*1.1, uGolden*0.6);
+                    cloudCol=mix(cloudCol, uSunColor*1.25, facingCloud*0.55);
+                    col=mix(col, cloudCol, ccd*0.45);
+                }
+                // [3K] 高层卷云(被霞光染金)
+                float cirrusH=smoothstep(0.15, 0.75, h);
+                if(cirrusH>0.0 && uCirrus>0.001){
+                    vec2 cuv2=vec2(atan(v.x,v.z), h)*3.0;
+                    cuv2.x+=uTime*0.015;
+                    float cir=pow(smoothstep(0.5, 0.85, fbm(cuv2*1.3)), 1.5)*uCirrus*cirrusH;
+                    float facing=smoothstep(-0.2, 0.8, dot(normalize(vec3(v.x,0.3,v.z)), uSunDir));
+                    vec3 cirCol=mix(vec3(0.55,0.45,0.65), uGoldenColor*1.15, facing);
+                    cirCol=mix(cirCol, vec3(0.95,0.97,1.0), smoothstep(0.6,1.0,facing)*0.6);
+                    col=mix(col, cirCol, cir*0.85);
+                }
+                // [3K] 低空暖雾(金霞地平线泛金)
+                float lowHaze=smoothstep(0.0, 0.12, h)*(1.0-smoothstep(0.12,0.4,h));
+                col=mix(col, uGoldenColor*0.9, lowHaze*uGolden*0.55);
+
+                // [真实感] 天空与地形走同一条 ACES 曲线, 太阳不再是一块死白, 云霞有层次
+                col=jACESFilm(jsrgb2lin(col), 1.12);
+                gl_FragColor=vec4(jlin2srgb(col), 1.0);
+            }
+        `
+    })
+);
+skyDome.frustumCulled=false;
+skyDome.renderOrder=-1;
+scene.add(skyDome);
+
+setLoad(35);
+
+// ==================== Terrain Generation (Real Jiajin Mountain Architecture) ====================
+// 海拔换算: 1 unit = 5 米; 实际海拔米 = h*5+2500
+//   硗碛 2500m  = h=0
+//   烧鸡窝 3000m = h=100
+//   一支箭 3500m = h=200
+//   垭口 4114m   = h=323
+//   主峰 4930m   = h=486
+//   石喇嘛 5380m = h=576
+//   尖山子 5472m = h=594
+//   狮子山 5338m = h=568
+const mountainNoise=new SimplexNoise(WORLD_SEED);
+const detailNoise=new SimplexNoise(WORLD_SEED+1);
+const erosionNoise=new SimplexNoise(WORLD_SEED+2);
+const ridgeNoise=new SimplexNoise(WORLD_SEED+3);
+const valleyNoise=new SimplexNoise(WORLD_SEED+4);
+const cliffNoise=new SimplexNoise(WORLD_SEED+5);
+const aspectNoise=new SimplexNoise(WORLD_SEED+6);
+// [真实感-地质] 土雪交融 / 流石滩专用噪声(夹金山主体为板岩、砂岩互层)
+const patchNoise=new SimplexNoise(WORLD_SEED+7);   // 舌状雪斑
+const screeNoise=new SimplexNoise(WORLD_SEED+8);   // 碎石坡簇集
+const soilNoise =new SimplexNoise(WORLD_SEED+9);   // 裸土斑块
+
+// === 真实 4 个有名山峰(位置 / 海拔 / 影响半径) ===
+// 海拔 = h*5+2500;r 用窄半径,避免峰与峰叠加超过真实高度
+const PEAKS = [
+    {x: -100, z: 2230, h: 486, r: 220, name:'主峰'},       // 4930m(挪到西侧,避免挡下山路)
+    {x: 320,  z: 1990, h: 576, r: 200, name:'石喇嘛'},       // 5380m
+    {x: -220, z: 2320, h: 594, r: 210, name:'尖山子'},        // 5472m
+    {x: -120, z: 2600, h: 568, r: 230, name:'狮子山'},        // 5338m
+    {x: 380,  z: 2380, h: 430, r: 180, name:'副峰(东)'},     // 4650m
+    {x: -340, z: 1880, h: 380, r: 180, name:'副峰(西南)'},   // 4400m
+];
+
+// === 山脊线(短的刃脊连接) ===
+const RIDGES = [
+    {a: PEAKS[0], b: PEAKS[1], width: 35, h: 50},  // 主峰-石喇嘛
+    {a: PEAKS[0], b: PEAKS[2], width: 45, h: 60},  // 主峰-尖山子
+    {a: PEAKS[0], b: PEAKS[3], width: 55, h: 55},  // 主峰-狮子山
+    {a: PEAKS[1], b: PEAKS[4], width: 30, h: 40},  // 石喇嘛-东副峰
+    {a: PEAKS[2], b: PEAKS[3], width: 35, h: 45},  // 尖山子-狮子山
+];
+
+// === 垭口(王母寨,4114m,作为强制低点的 saddle) ===
+const PASS = {x: 100, z: 2000, target: 323, radius: 100};
+
+function pointToSegmentDistance(px, pz, a, b) {
+    const dx = b.x - a.x, dz = b.z - a.z;
+    const len2 = dx*dx + dz*dz;
+    if (len2 < 0.001) return Math.sqrt((px-a.x)*(px-a.x) + (pz-a.z)*(pz-a.z));
+    let t = ((px-a.x)*dx + (pz-a.z)*dz) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const px2 = a.x + t*dx, pz2 = a.z + t*dz;
+    return Math.sqrt((px-px2)*(px-px2) + (pz-pz2)*(pz-pz2));
+}
+
+// 角峰影响:cos² 圆滑衰减(像真实山体的钟形剖面)
+function peakInfluence(d, r) {
+    if (d > r) return 0;
+    const t = d / r;
+    const c = Math.cos(t * Math.PI * 0.5);
+    return c * c; // cos² 平滑
+}
+
+// === 主登山路径的海拔函数(沿 z 轴) ===
+//   z=80  硗碛     2500m (h=0)
+//   z=700 烧鸡窝   3000m (h=100)
+//   z=1300 一支箭  3500m (h=200)
+//   z=2000 垭口    4114m (h=323)  ← 路径最高点
+//   z=2400 达维    2715m (h=43)
+function pathElevation(z) {
+    if (z < 80) return 0;
+    if (z < 2000) {
+        // 上升段(线性,自然斜率 17%)
+        const t = (z - 80) / 1920;
+        return t * 323;
+    }
+    if (z < 2400) {
+        // 下降段(下到 达维)
+        const t = (z - 2000) / 400;
+        return 323 - t * 280;
+    }
+    return 43;
+}
+
+// === 真实 夹金山 高度场 ===
+// 思路:
+//   1. 主路径走廊(沿 z 轴线性升到 323 垭口)
+//   2. 两侧山体 V 形剖面(中央山谷 → 两侧 ridge 升高 80)
+//   3. 6 个有名山峰叠加(取 max 不求和,避免高度堆叠)
+//   4. 短的刃脊连接相邻山峰
+//   5. 垭口 强制为低 saddle
+//   6. 高海拔区域的雪岩交错锯齿
+//   7. 侵蚀 + 细部噪声
+function getTerrainHeight(x, z) {
+    let h = 0;
+
+    // 1. 主路径海拔(硗碛→烧鸡窝→一支箭→垭口→达维)
+    h += pathElevation(z);
+
+    // 2. 路径两侧的山体剖面(V 形山谷,中央低两侧升高)
+    const dPath = Math.abs(x - 100);
+    if (dPath < 350) {
+        if (dPath < 120) {
+            // 上升到 ridge 顶:0 → 80
+            h += (dPath / 120) * 80;
+        } else if (dPath < 250) {
+            // ridge 顶
+            h += 80;
+        } else {
+            // 下降到外侧
+            h += 80 * (1 - (dPath - 250) / 100);
+        }
+    }
+
+    // 3. 各有名山峰(角峰)— 用 max 覆盖局部地形,避免与 path 叠加
+    let peakH = 0;
+    for (let i = 0; i < PEAKS.length; i++) {
+        const p = PEAKS[i];
+        const dx = x - p.x, dz = z - p.z;
+        const d = Math.sqrt(dx*dx + dz*dz);
+        const inf = peakInfluence(d, p.r);
+        if (p.h * inf > peakH) peakH = p.h * inf;
+    }
+    if (peakH > h) h = peakH;
+
+    // 4. 山脊线(刃脊:在两峰间填充,峰顶不加)
+    for (let i = 0; i < RIDGES.length; i++) {
+        const r = RIDGES[i];
+        const len2 = (r.b.x-r.a.x)**2 + (r.b.z-r.a.z)**2;
+        let t = len2 > 0.001 ? ((x - r.a.x)*(r.b.x-r.a.x) + (z - r.a.z)*(r.b.z-r.a.z)) / len2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        const endFactor = Math.sin(t * Math.PI);  // 0 at endpoints, 1 at middle
+        const d = pointToSegmentDistance(x, z, r.a, r.b);
+        const cross = peakInfluence(d, r.width);
+        h += r.h * cross * endFactor;
+    }
+
+    // 5. 垭口 saddle 强制低点
+    {
+        const dx = x - PASS.x, dz = z - PASS.z;
+        const d = Math.sqrt(dx*dx + dz*dz);
+        if (d < PASS.radius * 2) {
+            const t = d / (PASS.radius * 2);
+            const blend = t * t * (3 - 2 * t); // smoothstep
+            h = h * blend + PASS.target * (1 - blend);
+        }
+    }
+
+    // 6. 高海拔锐利山脊噪声(山顶附近雪岩交错的锯齿) — 减半,避免切碎峰顶
+    const ridge1 = 1 - Math.abs(ridgeNoise.noise2D(x*0.012, z*0.012));
+    const highAlt = Math.max(0, (h - 280) / 250); // 3000m+ 才生效
+    h += Math.pow(ridge1, 5) * 25 * highAlt;
+
+    // 7. 悬崖噪声(陡坡破碎感) — 减半
+    const cliff = 1 - Math.abs(cliffNoise.noise2D(x*0.025, z*0.025));
+    h += Math.pow(cliff, 4) * 10 * highAlt;
+
+    // 8. 侵蚀(中尺度起伏,让山体有冲沟感)
+    const erosion = erosionNoise.noise2D(x*0.015, z*0.015);
+    h += erosion * 12;
+
+    // 9. 细部噪声
+    const detail = detailNoise.noise2D(x*0.06, z*0.06);
+    h += detail * 4;
+
+    // 10. 山外远山(地形边缘不要太平)
+    const distFromMountain = Math.sqrt(x*x + (z-2200)*(z-2200));
+    if (distFromMountain > 1500) {
+        const farNoise = mountainNoise.noise2D(x*0.003, z*0.003);
+        h += farNoise * 30 * Math.min(1, (distFromMountain-1500)/1000);
+    }
+
+    // === 11. [3K] 山肩/裙摆(山体向两侧延展, 阳坡更宽缓) ===
+    // 坡向近似: 取该点相对于主山脊(x=100)的方位, 叠加南北梯度(路径沿 z 轴 = 北方)
+    // 避免递归: 仅用已算出的局部高度差(前后 z 采样的近似在调用方已不可得, 故用 x 方位 + 全局偏置)
+    {
+        const dx=x-100;
+        const radial=Math.atan2(dx, 1.0);      // 相对山脊的方位角
+        const shoulderAmt=Math.max(0, 1.0 - distFromMountain/900);
+        const sunExposure=(1.0+Math.cos(radial))*0.5;  // 阳面(朝南)山肩更宽缓
+        h += shoulderAmt*(8+sunExposure*14)*(1.0-highAlt*0.6);
+    }
+
+    // === 12. [3K] 雪崩沟/冲沟(高海拔沿走向的细沟壑) ===
+    if (h>250){
+        const gully=Math.abs(erosionNoise.noise2D(x*0.04, z*0.04));
+        const gullyMask=Math.pow(1.0-gully, 6)*Math.min(1, (h-250)/180);
+        h -= gullyMask*9;
+    }
+
+    // === 13. [3K] 蜂窝岩(高海拔陡处坑洼, 用悬崖噪声近似陡度) ===
+    if (highAlt>0.4){
+        const honey=Math.abs(cliffNoise.noise2D(x*0.06, z*0.06));
+        h -= Math.pow(honey, 6)*3.0*highAlt;
+    }
+
+    return Math.max(0, h);
+}
+
+// === 坡度 + 朝向(用于贴材质 / 雪线) ===
+function getSlopeAndAspect(wx, wz, eps) {
+    eps = eps || 0.5;
+    const h0 = getTerrainHeight(wx, wz);
+    const hx = getTerrainHeight(wx+eps, wz);
+    const hz = getTerrainHeight(wx, wz+eps);
+    const slope = Math.sqrt((hx-h0)*(hx-h0) + (hz-h0)*(hz-h0)) / eps;
+    // 坡面法线梯度
+    const nx = (h0 - hx) / eps;
+    const nz = (h0 - hz) / eps;
+    // 朝向:北=0,东=π/2,南=π,西=-π/2
+    // 在世界系中 +z 是向"北"(上坡方向),所以法线 x,z 决定坡向
+    const aspect = Math.atan2(nx, nz);
+    return {slope, aspect, h: h0};
+}
+
+// 雪线偏移:北坡(冷)雪线低,南坡(暖)雪线高
+function getSnowLine(aspect) {
+    // aspect:北=0,东=π/2,南=π/西=-π/2
+    // 北坡(朝南)雪线低 50,南坡(朝北)雪线高 50
+    const aspectOffset = Math.cos(aspect) * 60; // -60 ~ +60
+    return SNOW_HEIGHT + aspectOffset;
+}
+
+function getSlope(wx, wz, eps) {
+    return getSlopeAndAspect(wx, wz, eps).slope;
+}
+
+const SPAWN_X=100, SPAWN_Z=80;
+const spawnH=getTerrainHeight(SPAWN_X, SPAWN_Z);
+gameState.position.set(SPAWN_X, spawnH+PLAYER_HEIGHT+0.5, SPAWN_Z);
+camera.position.copy(gameState.position);
+
+// ==================== Custom Snow/Rock Material (Real Subsurface + Specular) ====================
+// 用 ShaderMaterial 实现真实雪面:
+//   - 白光直射 + 蓝色阴影(雪的次表面散射)
+//   - 太阳镜面反射(雪晶闪光)
+//   - 陡坡自动过渡到岩石
+//   - 按海拔混色
+// ==================== [真实感核心] 程序化 PBR 地形贴图(免外部资源, DataTexture) ====================
+// 旧版用"随机色斑"当纹理 —— 只有明暗、没有凹凸, 所以中距离一片塑料。
+// 这里改为真正的 PBR 贴图集, 通道打包省纹理单元与带宽:
+//   N 图: rgb = 切线空间法线   a = 高度(供雪/岩"高度混合"使用)
+//   C 图: rgb = 反照率(sRGB)   a = 粗糙度
+// 噪声全部"周期化"(格点取模), 保证任意重复都无缝、无网格感。
+const TEX_SIZE=(PERF.tier<=1)?512:256;
+function _im(a,b){return Math.imul(a,b)|0;}
+function _hs(x,y,s){
+    let h=_im(x,374761393)+_im(y,668265263)+_im(s,1442695041);
+    h=_im(h^(h>>>13),1274126177);
+    return ((h^(h>>>16))>>>0)/4294967296;
+}
+function vnT(x,y,px,py,s){          // 可平铺 value noise
+    const xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi;
+    const X0=((xi%px)+px)%px, Y0=((yi%py)+py)%py, X1=(X0+1)%px, Y1=(Y0+1)%py;
+    const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+    const a=_hs(X0,Y0,s), b=_hs(X1,Y0,s), c=_hs(X0,Y1,s), d=_hs(X1,Y1,s);
+    return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+}
+function fbmT(x,y,fx,fy,oct,s){
+    let sum=0,amp=0.5,tot=0,px=fx,py=fy;
+    for(let i=0;i<oct;i++){sum+=amp*vnT(x*px,y*py,px,py,s+_im(i,1013));tot+=amp;amp*=0.5;px*=2;py*=2;}
+    return sum/tot;
+}
+function ridT(x,y,fx,fy,oct,s){     // 脊状噪声 -> 岩棱 / 裂缝
+    let sum=0,amp=0.5,tot=0,px=fx,py=fy;
+    for(let i=0;i<oct;i++){
+        const n=1-Math.abs(vnT(x*px,y*py,px,py,s+_im(i,577))*2-1);
+        sum+=amp*n*n;tot+=amp;amp*=0.5;px*=2;py*=2;
+    }
+    return sum/tot;
+}
+function c01(v){return v<0?0:(v>1?1:v);}
+function h2n(hgt,S,strength){       // 高度场 -> 法线贴图(Sobel 差分), a 通道保留高度
+    const out=new Uint8Array(S*S*4);
+    const at=function(x,y){return hgt[(((y%S)+S)%S)*S+(((x%S)+S)%S)];};
+    for(let y=0;y<S;y++){for(let x=0;x<S;x++){
+        const dx=(at(x+1,y)-at(x-1,y))*strength, dy=(at(x,y+1)-at(x,y-1))*strength;
+        const il=1/Math.sqrt(dx*dx+dy*dy+1), i=(y*S+x)*4;
+        out[i]=(-dx*il*0.5+0.5)*255; out[i+1]=(-dy*il*0.5+0.5)*255; out[i+2]=(il*0.5+0.5)*255;
+        out[i+3]=c01(at(x,y))*255;
+    }}
+    return out;
+}
+function mkTex(d,S,an){
+    const t=new THREE.DataTexture(d,S,S,THREE.RGBAFormat);
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;
+    t.magFilter=THREE.LinearFilter; t.minFilter=THREE.LinearMipmapLinearFilter;
+    t.generateMipmaps=true; t.anisotropy=Math.min(8,an); t.needsUpdate=true;
+    return t;
+}
+// 雪: 大尺度雪丘 + 风蚀壳 sastrugi(各向异性拉长) + 细冰粒;粗糙度里带"风蚀硬雪更亮更滑"
+function buildSnow(S){
+    const hgt=new Float32Array(S*S), col=new Uint8Array(S*S*4);
+    for(let y=0;y<S;y++){const v=y/S; for(let x=0;x<S;x++){const u=x/S;
+        let h=fbmT(u,v,4,4,3,11)*0.52;
+        h+=fbmT(u,v,18,5,4,23)*0.30;      // 风蚀脊: 沿一个方向拉长
+        h+=fbmT(u,v,64,64,2,37)*0.11;     // 冰晶颗粒
+        hgt[y*S+x]=c01(h*0.92+0.06);
+        const grain=fbmT(u,v,96,96,2,53), patch=fbmT(u,v,5,5,3,67), hard=fbmT(u,v,11,3,3,83);
+        const i=(y*S+x)*4;
+        col[i]  =c01(0.90+patch*0.06+grain*0.05+hard*0.05)*255;
+        col[i+1]=c01(0.93+patch*0.05+grain*0.05+hard*0.04)*255;
+        col[i+2]=c01(0.99+patch*0.01+grain*0.04+hard*0.02)*255;
+        col[i+3]=c01(0.82-hard*0.24+grain*0.10)*255;   // 粗糙度
+    }}
+    return {n:h2n(hgt,S,S*0.045), c:col};
+}
+// 岩: 多尺度起伏 + 脊状裂缝 + 矿物斑点;颜色是花岗岩(浅色长石 + 黑云母 + 风化褐)
+function buildRock(S){
+    const hgt=new Float32Array(S*S), col=new Uint8Array(S*S*4);
+    for(let y=0;y<S;y++){const v=y/S; for(let x=0;x<S;x++){const u=x/S;
+        let h=fbmT(u,v,4,4,4,101)*0.46;
+        h+=fbmT(u,v,16,16,4,211)*0.26;
+        h+=ridT(u,v,28,28,3,307)*0.20;    // 裂缝 / 岩棱
+        h+=fbmT(u,v,72,72,2,401)*0.09;
+        hgt[y*S+x]=c01(h*0.95+0.03);
+        const mica=fbmT(u,v,88,88,2,503), feld=fbmT(u,v,34,34,3,601), wea=fbmT(u,v,6,6,3,701);
+        const i=(y*S+x)*4;
+        col[i]  =c01(0.50+feld*0.15-mica*0.20+wea*0.10)*255;
+        col[i+1]=c01(0.47+feld*0.14-mica*0.19+wea*0.08)*255;
+        col[i+2]=c01(0.44+feld*0.13-mica*0.17+wea*0.05)*255;
+        col[i+3]=c01(0.86-mica*0.12+wea*0.08)*255;
+    }}
+    return {n:h2n(hgt,S,S*0.055), c:col};
+}
+// 高山草甸: 枯黄 <-> 深绿 <-> 苔褐 的斑块
+function buildGrass(S){
+    const col=new Uint8Array(S*S*4);
+    for(let y=0;y<S;y++){const v=y/S; for(let x=0;x<S;x++){const u=x/S;
+        const a=fbmT(u,v,9,9,3,907), b=fbmT(u,v,70,70,2,1109), c=fbmT(u,v,3,3,2,1201);
+        const i=(y*S+x)*4;
+        col[i]  =c01(0.26+a*0.26+c*0.08+b*0.06)*255;
+        col[i+1]=c01(0.33+a*0.16+c*0.10+b*0.06)*255;
+        col[i+2]=c01(0.16+a*0.10+c*0.04+b*0.05)*255;
+        col[i+3]=c01(0.90+b*0.08)*255;
+    }}
+    return col;
+}
+setLoad(26);
+const _maxAniso=renderer.capabilities.getMaxAnisotropy();
+const _snowM=buildSnow(TEX_SIZE), _rockM=buildRock(TEX_SIZE);
+const snowNTex=mkTex(_snowM.n,TEX_SIZE,_maxAniso);
+const snowCTex=mkTex(_snowM.c,TEX_SIZE,_maxAniso);
+const rockNTex=mkTex(_rockM.n,TEX_SIZE,_maxAniso);
+const rockCTex=mkTex(_rockM.c,TEX_SIZE,_maxAniso);
+const grassCTex=mkTex(buildGrass(TEX_SIZE),TEX_SIZE,_maxAniso);
+setLoad(38);
+
+const terrainUniforms={
+    uSunDir:{value:sunDir.clone()},
+    uSunColor:{value:new THREE.Color(0xfff0d4)},
+    uSunIntensity:{value:1.0},
+    uSkyColor:{value:new THREE.Color(0xa8c8e0)},
+    uGroundColor:{value:new THREE.Color(0x4a3a2a)},
+    uSnowColor:{value:new THREE.Color(0xf6f9ff)},
+    uRockColor:{value:new THREE.Color(0xb4ab9d)},     // [真实感] 花岗岩基色乘子(原值过暗)
+    uMeadowColor:{value:new THREE.Color(0xd8c9a0)},   // 枯草黄
+    uForestColor:{value:new THREE.Color(0x93ad6a)},   // 高山绿
+    uSnowLine:{value:SNOW_HEIGHT},
+    uTime:{value:0},
+    uCameraPos:{value:new THREE.Vector3()},
+    uWindDir:{value:new THREE.Vector2(1,0.3)},
+    // === [3K] 金霞 / 材质控制 ===
+    uGolden:{value:0.0},
+    uGoldenColor:{value:new THREE.Color(0xffb060)},
+    uViewDistance:{value:1500.0},
+    uSnowRoughness:{value:0.78},
+    uRockRoughness:{value:0.92},
+    // === [真实感] PBR 贴图集 + 表面控制 ===
+    uSnowN:{value:snowNTex}, uSnowC:{value:snowCTex},
+    uRockN:{value:rockNTex}, uRockC:{value:rockCTex},
+    uGrassC:{value:grassCTex},
+    uTexScale:{value:1.0},                 // 纹理世界尺度
+    uDetailDist:{value:(PERF.tier<=1)?240.0:150.0},  // 微观细节(冰晶/颗粒)淡出距离
+    uSnowNormal:{value:0.85},              // 雪面法线强度
+    uRockNormal:{value:1.05},              // 岩面法线强度
+    uSkyIntensity:{value:1.0},             // 天空光强度(阴影侧偏蓝的来源)
+    uFogDensity:{value:0.0011},            // 与场景雾同步的大气透视
+    uFogColor:{value:new THREE.Color(0xa8c8e0)},
+    uExposure:{value:1.12},
+    // === [真实感-地质] 夹金山地表(资料: 高山草甸土腐殖质层浅灰棕~棕褐, 母质层淡棕黄;
+    //     基岩为板岩夹砂岩, 寒冻风化成灰褐带灰绿/紫调的片状碎石) ===
+    uSoilColor:{value:new THREE.Color(0x8a7454)},    // 高山草甸土(棕褐)
+    uScreeColor:{value:new THREE.Color(0x9a948a)},   // 板岩碎石风化面(灰褐)
+    // [地面积雪] 0=无积雪 1=全覆盖; uSnowMelt 控制消融程度(让残雪斑驳而非均匀退去)
+    uSnowAccum:{value:0.42},
+    uSnowMelt :{value:0.0}
+};
+
+const terrainVertexShader=`
+    varying vec3 vWorldPos;
+    varying vec3 vNormal;
+    // [兼容性] 只保留真正会用的 varying: GLSL ES 1.0 只保证 8 个 vec4 插槽,
+    // 阴影注入还要占 vDirectionalShadowCoord + vWorldPosForShadow 两个。
+    // 原先把 vHeight/vSlope/vUv 也声明了却没人用, 白吃 3 个插槽 —— 在只给 8 个的
+    // GPU 上会直接链接失败、地形整个不渲染(表现就是"站在虚空里、树飘在天上")。
+    varying vec4 vData;           // [性能-烘焙] x:雪 y:岩 z:崖 w:冰川
+    varying vec4 vExtra;          // [性能-烘焙] x:AO y:曲率(+凹/-凸) z:风积雪 w:变体
+    varying vec4 vSoil;           // [真实感-地质] x:雪斑破碎 y:裸土 z:碎石 w:融雪湿度
+    attribute vec4 aData;         // [性能-烘焙] CPU 生成的地形掩码
+    attribute vec4 aExtra;        // [真实感] CPU 生成的 AO / 曲率 / 积雪
+    attribute vec4 aSoil;         // [真实感-地质] CPU 生成的土雪交融 / 流石滩掩码
+    uniform float uTime;
+    uniform vec3 uCameraPos;      // [FIX] 顶点 LOD 距离计算需要(缺失会导致材质编译失败)
+
+    // 简单 hash noise 用于顶点细节
+    float hash(vec3 p){
+        p=fract(p*vec3(443.897, 441.423, 437.195));
+        p+=dot(p, p.yzx+19.19);
+        return fract((p.x+p.y)*p.z);
+    }
+    float noise3(vec3 p){
+        vec3 i=floor(p), f=fract(p);
+        f=f*f*(3.0-2.0*f);
+        return mix(
+            mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),
+                mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+            mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y), f.z);
+    }
+
+    void main(){
+        vec3 p=position;
+        // [3K] 顶点微位移(近处细节, 远处 LOD 退化避免闪烁)
+        float distToCam=distance((modelMatrix*vec4(p,1.0)).xyz, uCameraPos);
+        float lodFade=1.0-smoothstep(120.0, 260.0, distToCam);
+        float micro=noise3(p*0.5)*0.3*lodFade;
+        p+=normal*micro;
+        vWorldPos=(modelMatrix*vec4(p,1.0)).xyz;
+        vNormal=normalize(normalMatrix*normal);
+        vData=aData;   // [致命修复] 烘焙数据进 Shader 的唯一通道, 缺了它雪线/岩石/悬崖/冰川全部失效
+        vExtra=aExtra; // [真实感] AO / 曲率 / 风积雪
+        vSoil =aSoil;  // [真实感-地质] 雪斑破碎 / 裸土 / 碎石 / 融雪
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);
+    }
+`;
+
+const terrainFragmentShader=`
+    varying vec3 vWorldPos;
+    varying vec3 vNormal;
+    varying vec4 vData;      // [性能-烘焙] x:雪 y:岩 z:崖 w:冰川
+    varying vec4 vExtra;     // [性能-烘焙] x:AO y:曲率(+凹/-凸) z:风积雪 w:变体
+    varying vec4 vSoil;      // [真实感-地质] x:雪斑破碎 y:裸土 z:碎石 w:融雪湿度
+
+    uniform vec3 uSunDir,uSunColor,uSkyColor,uGroundColor;
+    uniform vec3 uSnowColor,uRockColor,uMeadowColor,uForestColor;
+    uniform float uSunIntensity;
+    uniform float uSnowLine;
+    uniform vec3 uCameraPos;
+    uniform float uTime;
+    uniform float uGolden;
+    uniform vec3  uGoldenColor;
+    uniform float uSnowRoughness;
+    uniform float uRockRoughness;
+    uniform float uViewDistance;
+    // === [真实感] PBR 贴图集 ===
+    uniform sampler2D uSnowN,uSnowC,uRockN,uRockC,uGrassC;
+    uniform float uTexScale,uDetailDist,uSnowNormal,uRockNormal,uSkyIntensity,uFogDensity,uExposure;
+    uniform vec3 uFogColor;
+    // === [真实感-地质] 夹金山高山草甸土 / 板岩砂岩碎石 ===
+    uniform vec3 uSoilColor,uScreeColor;
+    // === [地面积雪] 天气驱动: 下雪时低海拔也积一层薄雪, 天晴后慢慢消融 ===
+    uniform float uSnowAccum,uSnowMelt;
+    uniform vec2 uWindDir;
+    // gShadow 由 onBeforeCompile 注入声明(阴影因子)
+
+    ${GLSL_TONEMAP}
+
+    float h31(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+
+    // === 三平面投影(陡坡/岩壁不拉伸) ===
+    vec4 texN(sampler2D t, vec3 p, vec3 n, float sc){
+    #ifdef FAST_TEX
+        vec4 s=texture2D(t,p.xz*sc);
+        vec3 tn=s.rgb*2.0-1.0;
+        return vec4(vec3(tn.x,tn.z,tn.y), s.a);
+    #else
+        vec3 w=abs(n); w=w*w*w*w; w/=(w.x+w.y+w.z+1e-5);
+        vec4 tx=texture2D(t,p.zy*sc), ty=texture2D(t,p.xz*sc), tz=texture2D(t,p.xy*sc);
+        vec3 ax=sign(n);
+        vec3 nx=tx.rgb*2.0-1.0, ny=ty.rgb*2.0-1.0, nz=tz.rgb*2.0-1.0;
+        vec3 wx=vec3(nx.z*ax.x, nx.y, nx.x);
+        vec3 wy=vec3(ny.x, ny.z*ax.y, ny.y);
+        vec3 wz=vec3(nz.x*ax.z, nz.y, nz.z*ax.z);
+        return vec4(wx*w.x+wy*w.y+wz*w.z, tx.a*w.x+ty.a*w.y+tz.a*w.z);
+    #endif
+    }
+    vec4 texC(sampler2D t, vec3 p, vec3 n, float sc){
+    #ifdef FAST_TEX
+        return texture2D(t,p.xz*sc);
+    #else
+        vec3 w=abs(n); w=w*w*w*w; w/=(w.x+w.y+w.z+1e-5);
+        return texture2D(t,p.zy*sc)*w.x + texture2D(t,p.xz*sc)*w.y + texture2D(t,p.xy*sc)*w.z;
+    #endif
+    }
+
+    void main(){
+        vec3 N0=normalize(vNormal);
+        vec3 V =normalize(uCameraPos-vWorldPos);
+        vec3 L =normalize(uSunDir);
+        vec3 Hv=normalize(L+V);
+        float dist=length(uCameraPos-vWorldPos);
+
+        float altF=vData.x, slopeF=vData.y, cliffF=vData.z, glacF=vData.w;
+        // [真实感-地质] 地表覆盖: 必须在使用它们的"高度混合"之前声明(GLSL 要求先声明后使用)
+        float screeF=vSoil.z;                 // 碎石覆盖(成片簇集)
+        float soilF =vSoil.y;                 // 裸土覆盖
+        float wetF  =vSoil.w;                 // 融雪湿度
+        float brkF  =vSoil.x;                 // 雪斑破碎度
+        float ao=vExtra.x;                    // 1=开阔 0=深沟
+        float curv=(vExtra.y-0.5)*2.0;        // +凹(沟/坑) -凸(脊)
+        float drift=vExtra.z;                 // 背风坡风积雪
+        float vary=vExtra.w;                  // 表面变体
+
+        // 距离 LOD: 远处自动收掉微细节, 杜绝闪烁与"移动麻点"
+        float detailFade=1.0-smoothstep(uDetailDist*0.30, uDetailDist, dist);
+        float macroFade =1.0-smoothstep(uViewDistance*0.35, uViewDistance*0.95, dist);
+
+        // ==================== 岩石(花岗岩) ====================
+        vec4 rN=texN(uRockN, vWorldPos, N0, 0.40*uTexScale);
+        vec4 rC=texC(uRockC, vWorldPos, N0, 0.26*uTexScale);
+        vec4 rN2=texture2D(uRockN, vWorldPos.xz*2.05*uTexScale+vec2(0.37,0.71));
+        vec3 r2=rN2.rgb*2.0-1.0;
+        vec3 rockNrm=normalize(N0 + (rN.rgb + vec3(r2.x,r2.z,r2.y)*0.55*detailFade)*uRockNormal*(0.30+0.70*macroFade));
+        float rockH=max(rN.a, rN2.a*0.5);
+        vec3 rockAlb=jsrgb2lin(rC.rgb)*uRockColor;
+        float rockRough=clamp(rC.a*uRockRoughness, 0.25, 1.0);
+        // 岩层理: 陡坡上的水平沉积条纹
+        float strata=texture2D(uRockC, vec2(vWorldPos.x*0.055+vWorldPos.z*0.055, vWorldPos.y*0.40)).r;
+        rockAlb*=(0.78+0.46*strata)*(0.92+0.16*vary);
+        rockRough=clamp(rockRough+0.10*(1.0-strata),0.25,1.0);
+
+        // ==================== 雪(风蚀壳 + 冰晶) ====================
+        vec4 sN=texN(uSnowN, vWorldPos, N0, 0.20*uTexScale);
+        vec4 sC=texC(uSnowC, vWorldPos, N0, 0.14*uTexScale);
+        vec4 sN2=texture2D(uSnowN, vWorldPos.xz*1.55*uTexScale+vec2(0.13,0.29));
+        vec3 s2=sN2.rgb*2.0-1.0;
+        vec3 snowNrm=normalize(N0 + (sN.rgb + vec3(s2.x,s2.z,s2.y)*0.50*detailFade)*uSnowNormal*(0.25+0.75*macroFade));
+        float snowH=max(sN.a, sN2.a*0.5);
+        float snowPatchN=texture2D(uSnowC, vWorldPos.xz*0.010*uTexScale).r;   // [土雪交融] 大尺度雪斑
+        vec3 snowAlb=jsrgb2lin(sC.rgb)*uSnowColor;
+        float snowRough=clamp(sC.a*(uSnowRoughness/0.78), 0.18, 1.0);
+
+        // ==================== 高度混合: 雪填岩缝, 岩脊破雪 ====================
+        // 这不是简单的"按高度插值", 而是用两张高度图互相遮挡 —— 过渡带自然碎裂,
+        // 石头缝里积雪、凸起的岩棱挂不住雪, 中距离的"塑料感"由此消失。
+        float rockExposure=clamp(slopeF*1.15 + cliffF*0.9 - curv*0.30 + (1.0-ao)*0.10, 0.0, 1.0);
+        // [土雪交融] 雪线附近(trans 最大)用噪声把雪撕成舌状碎斑: 同一高度上雪与土交错
+        float trans=1.0-abs(altF*2.0-1.0);
+        float patchMix=mix(1.0, smoothstep(0.28, 0.80, snowPatchN*0.55+brkF*0.65), trans);
+        float snowAmt=clamp(altF*(1.0-rockExposure*0.90)*patchMix + drift*0.28*altF - (1.0-brkF)*0.34*trans, 0.0, 1.0);
+        // === [地面积雪] 下雪后低海拔也积一层: 凹处/背风坡/阴坡堆得最厚 ===
+        // 注意方向: 雪是被风刮到凹处堆起来的, 凸脊反而被吹薄 —— 开阔处不该最多
+        float accumKeep=0.55+0.45*drift;                                          // 凹处更厚
+        accumKeep*=0.30+0.70*(1.0-clamp(slopeF*1.30,0.0,1.0));                    // 陡坡挂不住
+        accumKeep*=0.55+0.75*clamp(0.5-N0.z*0.5,0.0,1.0);                         // 阴坡留得更久
+        // 海拔调制: 起点(2500m)只留树荫凹处的残雪, 越往上越连片
+        float altNorm=clamp(vWorldPos.y/220.0, 0.0, 1.0);
+        accumKeep*=0.22+0.78*altNorm;
+        // 消融用噪声打碎 —— 残雪是"一块块化开"的, 不是整体均匀退色
+        float meltN=texture2D(uSnowC, vWorldPos.xz*0.020*uTexScale).g;
+        float accum=uSnowAccum*accumKeep*mix(1.0, smoothstep(0.35,0.72,meltN*0.6+0.45), clamp(uSnowMelt,0.0,1.0));
+        snowAmt=clamp(snowAmt + accum, 0.0, 1.0);
+        float hb=(snowAmt*1.25 + snowH*0.45) - (rockExposure*0.80 + rockH*0.45);
+        // 门槛改挂在 snowAmt 上(而不是 altF): 低海拔只要积雪够厚也该白,
+        // 同时挡住"平地噪声互搏"导致的伪雪点
+        float snowCover=smoothstep(0.16, 0.72, hb)*smoothstep(0.02, 0.12, snowAmt);
+        float iceCover=clamp(glacF*(0.55+0.45*snowH), 0.0, 1.0);
+
+        // ==================== 高山草甸土 / 碎石(地质: 板岩夹砂岩寒冻风化) ====================
+        // 这是"土与雪交融"的底下那一层 —— 雪化开之后露出来的真实地表。
+        // 土: 腐殖质棕褐 <-> 母质层淡棕黄, 用岩纹噪声做斑驳
+        float soilN=texture2D(uRockC, vWorldPos.xz*0.075*uTexScale).r;
+        vec3 soilAlb=jsrgb2lin(uSoilColor)*mix(jsrgb2lin(vec3(0.92,0.84,0.70)), jsrgb2lin(vec3(0.55,0.47,0.36)), soilN);
+        soilAlb*=0.82+0.36*texture2D(uRockN, vWorldPos.xz*0.22*uTexScale).a;
+        // 碎石: 板岩碎片偏灰、带灰绿/紫调, 新鲜断面更亮
+        float scrN=texture2D(uRockN, vWorldPos.xz*0.30*uTexScale).a;
+        float scrC=texture2D(uRockC, vWorldPos.xz*0.42*uTexScale).g;
+        vec3 screeAlb=jsrgb2lin(uScreeColor)*(0.62+0.55*scrN);
+        screeAlb=mix(screeAlb, screeAlb*vec3(0.92,0.95,1.02), scrC);   // 部分碎片泛灰绿
+        screeAlb=mix(screeAlb, screeAlb*vec3(1.06,0.97,0.94), smoothstep(0.6,1.0,scrN)); // 部分泛紫褐
+        // === 地衣(lichen): 流石滩石块表面橙黄/灰绿的壳状生物结皮 ===
+        // 这是高海拔最"出戏"的真实细节 —— 纯灰石头看着假, 长了地衣才像真在山里
+        float lichN=texture2D(uRockC, vWorldPos.xz*0.050*uTexScale).b;
+        float lichT=texture2D(uRockN, vWorldPos.xz*0.115*uTexScale).a;
+        float lichen=smoothstep(0.52, 0.88, lichN)*(1.0-altF*0.65)*(0.35+0.65*ao);
+        vec3 lichCol=mix(jsrgb2lin(vec3(0.44,0.38,0.17)), jsrgb2lin(vec3(0.29,0.35,0.25)), step(0.5,lichT));
+        screeAlb=mix(screeAlb, lichCol, lichen*0.58);
+        rockAlb =mix(rockAlb,  lichCol, lichen*0.34);
+        float soilRough =mix(0.94, 0.58, wetF);      // 湿土反光更强
+        float screeRough=mix(0.90, 0.62, wetF*0.7);
+
+        // ==================== 草甸 / 苔藓(雪线以下) ====================
+        vec4 gC=texture2D(uGrassC, vWorldPos.xz*0.085*uTexScale);
+        float vegF=clamp(1.0-altF*2.2, 0.0, 1.0);
+        // 草甸是"长在土上"的: 陡坡 / 高海拔 / 碎石坡上草甸退化, 露出底下的土和碎石
+        float vegMask=clamp(vegF*(1.0-slopeF*1.5)*(0.35+0.65*ao)*(1.0-screeF*0.85)*(1.0-soilF*0.70), 0.0, 1.0);
+        vec3 grassAlb=jsrgb2lin(gC.rgb)*mix(uMeadowColor, uForestColor, smoothstep(0.18,0.46,gC.g));
+        float grassRough=mix(0.88, 0.70, wetF);
+        float moss=clamp((1.0-altF)*ao*0.7, 0.0, 1.0)*0.35;
+        rockAlb=mix(rockAlb, jsrgb2lin(vec3(0.24,0.31,0.15)), moss*0.45);
+
+        // ==================== 合成表面 ====================
+        // 基底: 岩石 -> 土(草甸退化处) -> 碎石坡 -> 草甸 -> 雪
+        vec3 albedo=mix(rockAlb, soilAlb, soilF);
+        float rough =mix(rockRough, soilRough, soilF);
+        albedo=mix(albedo, screeAlb, screeF);
+        rough =mix(rough, screeRough, screeF);
+        albedo=mix(albedo, grassAlb, vegMask);
+        rough =mix(rough, grassRough, vegMask);
+        // [脏雪/融雪] 雪薄的地方(过渡带)混进土色 —— 这才是"雪化了一半"的样子, 而不是一条白线
+        float melt=smoothstep(0.04, 0.34, snowCover)*(1.0-smoothstep(0.58, 0.98, snowCover));
+        vec3 snowDirty=mix(snowAlb, mix(soilAlb*1.15, screeAlb*1.05, screeF), (0.42+0.28*wetF)*melt);
+        albedo=mix(albedo, snowDirty, snowCover);
+        rough =mix(rough, mix(snowRough, snowRough*0.52+0.06, melt), snowCover);   // 湿雪更亮更滑
+        albedo=mix(albedo, jsrgb2lin(vec3(0.66,0.78,0.92)), iceCover);
+        rough =mix(rough, 0.14+0.18*(1.0-snowH), iceCover);
+        vec3 N=normalize(mix(rockNrm, snowNrm, snowCover));
+
+        // ==================== 光照 ====================
+        float NdotL=max(dot(N,L),0.0);
+        float NdotV=max(dot(N,V),0.0);
+        float NdotH=max(dot(N,Hv),0.0);
+        float skyVis=mix(ao, 1.0, 0.22);
+        float hemiW =N.y*0.5+0.5;
+
+        vec3 direct = uSunColor * NdotL * uSunIntensity;   // 阴影因子由 onBeforeCompile 注入
+        // 天空光: 雪山阴影偏蓝、阴坡不死黑, 全靠这一项(被 AO 压出的沟壑也在这里)
+        // [曝光标定] 天空光约为直射的 1/6 —— 高于此值阴影就会"发飘", 失去雪的沉重感
+        vec3 skyLight=uSkyColor*uSkyIntensity*(0.10+0.38*hemiW)*skyVis;
+        vec3 bounce  =uGroundColor*(1.0-hemiW)*ao*0.35;
+        // 次表面散射: 阳光从雪层里透出来 —— 真实雪区别于"白油漆"的关键
+        float thick=snowCover*(0.5+0.5*snowH)+iceCover*0.5;
+        float back=pow(max(dot(-N,L),0.0),1.6);
+        vec3 sss=vec3(0.38,0.55,0.95)*(back*0.16*max(uSunIntensity,0.0)+0.06)*thick*(0.4+0.6*skyVis);
+        sss+=vec3(0.26,0.40,0.72)*(1.0-NdotL)*thick*0.16*skyVis;
+
+        // 高光(GGX D 近似) + 冰晶闪烁(近处)
+        float a2=max(rough*rough,0.004);
+        float dd=(NdotH*NdotH*(a2*a2-1.0)+1.0);
+        float D=(a2*a2)/(3.14159*dd*dd+1e-7);
+        vec3 spec=uSunColor*D*0.22*NdotL*gShadow*max(uSunIntensity,0.0);
+        float sparkle=0.0;
+        if(detailFade>0.002){
+            vec3 cell=floor(vWorldPos*85.0);
+            float rnd=h31(cell);
+            vec3 jit=vec3(h31(cell+7.1), h31(cell+13.7), h31(cell+23.3))-0.5;
+            vec3 sg=normalize(N+jit*1.7);
+            sparkle=pow(max(dot(sg,Hv),0.0), 380.0)*step(0.80, rnd)*10.0;
+            sparkle*=detailFade*snowCover*gShadow*max(uSunIntensity,0.0)*0.30;
+        }
+        // 掠射 Fresnel: 斜看雪面反射天空, 雪坡才有"面"而不是一片白
+        float fres=pow(1.0-NdotV,5.0);
+        vec3 refl=uSkyColor*(0.03+0.42*fres)*skyVis*(1.0-rough)*mix(0.4,1.0,snowCover);
+
+        vec3 col=albedo*(direct+skyLight+bounce+sss);
+        col+=spec*mix(0.35,1.0,snowCover);
+        col+=vec3(sparkle)*mix(vec3(1.0),uSunColor,0.3);
+        col+=refl;
+
+        // 金霞: 阳坡染金 / 阴坡冷紫 —— 冷暖对比把山体体积感拉出来
+        float sunFacing=smoothstep(-0.25,0.85,dot(N,L));
+        vec3 gTint=mix(vec3(0.42,0.36,0.58), uGoldenColor, sunFacing);
+        col=mix(col, col*gTint*1.35, uGolden*(sunFacing*0.7+0.3)*0.42);
+
+        // 大气透视: 与场景雾同源, 远山自然融进天光
+        float fogF=1.0-exp(-dist*uFogDensity*1.6);
+        col=mix(col, uFogColor*(0.55+0.45*uSkyIntensity), clamp(fogF,0.0,1.0)*0.92);
+
+        // 雪脊边缘的冷调轮廓光
+        float rim=pow(1.0-NdotV,3.0);
+        col+=uSkyColor*rim*snowCover*0.10*uSkyIntensity;
+
+        col=jACESFilm(col, uExposure);
+        gl_FragColor=vec4(jlin2srgb(col), 1.0);
+    }
+`;
+
+const terrainMaterial=new THREE.ShaderMaterial({
+    // [致命修复] 旧版用 UniformsUtils.merge —— 它会 clone 掉 Color/Vector/Texture,
+    // 导致主循环里对 terrainUniforms 的每帧更新全部落在"副本"上, 太阳方向/强度/天空色
+    // 其实从来没传给 GPU(画面因此显得假)。这里改为浅合并, uniform 对象保持同一引用。
+    uniforms:Object.assign({}, THREE.UniformsLib.lights, terrainUniforms),
+    // 中低端档位走平面投影(少 6 次纹理采样), 高端档位走三平面(陡坡不拉伸)
+    defines:(PERF.tier>=2)?{FAST_TEX:''}:{},
+    vertexShader:terrainVertexShader,
+    fragmentShader:terrainFragmentShader,
+    lights:true,
+    fog:false,
+    side:THREE.DoubleSide   // [FIX-夜黑碎片] 双保险: 杜绝任何视角下地形的单面剔除空洞
+});
+
+// === 阴影注入 onBeforeCompile ===
+// 自定义 ShaderMaterial 不会自动接收阴影,需要把 shadow map 采样注入 shader
+terrainMaterial.onBeforeCompile=function(shader){
+    // 1. vertex shader 注入:声明 shadow uniforms + 计算 shadow coord
+    shader.vertexShader=shader.vertexShader.replace(
+        'void main(){',
+        `#include <common>
+#include <shadowmap_pars_vertex>
+varying vec3 vWorldPosForShadow;
+void main(){`
+    );
+    // 替换最后,把世界坐标传给 fragment 并计算 shadow coord
+    shader.vertexShader=shader.vertexShader.replace(
+        'gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);',
+        `vWorldPosForShadow=(modelMatrix*vec4(p,1.0)).xyz;
+        #include <begin_vertex>
+        #include <beginnormal_vertex>
+        #include <defaultnormal_vertex>
+        #include <project_vertex>
+        #include <worldpos_vertex>
+        #include <shadowmap_vertex>
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);`
+    );
+
+    // 2. fragment shader 注入:声明 shadow uniforms + 计算 shadow factor
+    shader.fragmentShader=shader.fragmentShader.replace(
+        'void main(){',
+        `#include <common>
+#include <packing>
+#include <shadowmap_pars_fragment>
+float getTerrainShadow(){
+    float s=1.0;
+    #if NUM_DIR_LIGHT_SHADOWS>0
+        DirectionalLightShadow ds=directionalLightShadows[0];
+        s=getShadow(directionalShadowMap[0], ds.shadowMapSize, ds.shadowBias, ds.shadowRadius, vDirectionalShadowCoord[0]);
+    #endif
+    return s;
+}
+float gShadow=1.0;   // [真实感] 阴影因子(高光/闪烁也要吃阴影, 否则阴影里会冒出亮点)
+void main(){`
+    );
+
+    // 3. 把 shadow factor 应用到直接光照(sun)
+    shader.fragmentShader=shader.fragmentShader.replace(
+        'vec3 direct = uSunColor * NdotL * uSunIntensity;',
+        'gShadow=getTerrainShadow();\n        vec3 direct = uSunColor * NdotL * uSunIntensity * mix(0.12, 1.0, gShadow);'
+    );
+};
+
+// ==================== Chunks (Higher Mesh Resolution) ====================
+const chunks=new Map();
+
+// [性能] 距离分级分辨率(供地形与构建预算共用, 保证两边算出的顶点数一致)
+function chunkResFor(cx,cz){
+    const size=CHUNK_SIZE;
+    const ddx=cx*size+size/2-gameState.position.x, ddz=cz*size+size/2-gameState.position.z;
+    const dist=Math.sqrt(ddx*ddx+ddz*ddz);
+    let res;
+    if(dist<110)       res=CHUNK_RES;
+    else if(dist<260)  res=Math.max(72,CHUNK_RES>>1);
+    else if(dist<520)  res=Math.max(40,CHUNK_RES>>2);
+    else               res=Math.max(24,CHUNK_RES>>3);
+    return res;
+}
+class Chunk{
+    constructor(cx,cz){
+        this.cx=cx; this.cz=cz; this.disposed=false;
+        this.meshes=[];
+        const pcx=Math.floor(gameState.position.x/CHUNK_SIZE), pcz=Math.floor(gameState.position.z/CHUNK_SIZE);
+        this.ring=Math.max(Math.abs(cx-pcx),Math.abs(cz-pcz));   // 到玩家的环数
+        this.createTerrain();
+        this.createVegetation();
+        this.createSnowDetails();
+    }
+    createTerrain(){
+        const size=CHUNK_SIZE;
+        // [性能-LOD] 距离分级: 脚下全精度, 远景顶点降到 1/8, GPU 顶点压力大幅减负(远景在雾中, 无损观感)
+        const ccx=this.cx*size+size/2, ccz=this.cz*size+size/2;
+        const ddx=ccx-gameState.position.x, ddz=ccz-gameState.position.z;
+        const res=chunkResFor(this.cx,this.cz);
+        const geo=new THREE.PlaneGeometry(size,size,res,res);
+        geo.rotateX(-Math.PI/2);
+        const pos=geo.attributes.position;
+        // [性能-烘焙] 雪/岩/崖/冰川 + [真实感] AO/曲率/风积雪/土雪交融 全部在生成时算好写进顶点属性。
+        // 存储改用 Uint8(normalized): 1/255 精度对掩码足够, 显存与带宽只有 float 版的 1/4。
+        const N=pos.count, W=res+1;
+        const baked=new Uint8Array(N*4);
+        const extra=new Uint8Array(N*4);
+        const soil =new Uint8Array(N*4);
+        const hs=new Float32Array(N);
+        const step=size/res;
+        // === [性能] 低频噪声在 1/4 粗网格上计算, 顶点处双线性插值 ===
+        // 雪斑/碎石/裸土噪声频率都很低, 每顶点算一遍纯属浪费 ——
+        // 粗化后噪声调用降到 1/16, 烘焙耗时主要由地形求值决定。
+        const CW=49, cstep=size/(CW-1);   // [FIX-LOD接缝] 固定粗网格: 所有精度 chunk 共用同一套世界采样点
+        const cPatch=new Float32Array(CW*CW), cScree=new Float32Array(CW*CW), cSoil=new Float32Array(CW*CW);
+        for(let cy=0;cy<CW;cy++){
+            for(let cx2=0;cx2<CW;cx2++){
+                const wx=this.cx*size+cx2*cstep, wz=this.cz*size+cy*cstep;
+                cPatch[cx2+cy*CW]=patchNoise.noise2D(wx*0.0075, wz*0.0075)*0.55
+                                 + patchNoise.noise2D(wx*0.026,  wz*0.026 )*0.30
+                                 + patchNoise.noise2D(wx*0.085,  wz*0.085 )*0.15;
+                cScree[cx2+cy*CW]=screeNoise.noise2D(wx*0.018, wz*0.018);
+                cSoil [cx2+cy*CW]=soilNoise.noise2D(wx*0.035, wz*0.035);
+            }
+        }
+        // === [真实感-地质] 第一遍: 只算高度(每顶点 1 次地形求值) ===
+        // [性能] 旧版每顶点要调 4 次 getTerrainHeight(高/右邻/上邻), 跨区建块时是卡顿主因。
+        // 梯度改为在已算好的高度网格上做差分 —— 数学等价、快 4 倍。
+        for(let i=0;i<N;i++){
+            const lx=pos.getX(i), lz=pos.getZ(i);
+            const wx=this.cx*size+size/2+lx, wz=this.cz*size+size/2+lz;  // [FIX] 与 mesh.position 的 +size/2 对齐
+            const h=getTerrainHeight(wx,wz);
+            hs[i]=h;
+            pos.setY(i, h);
+        }
+        // 保存高度网格: 供植被放置直接插值取高(彻底免掉植被的地形求值)
+        this.grid=hs; this.gridW=W; this.gridStep=step;
+        // [FIX-LOD接缝] 高度网格的双线性采样器: 任意局部坐标取连续表面高度
+        const _hsAt=function(lx,lz){
+            let fx=(lx+size*0.5)/step, fz=(lz+size*0.5)/step;
+            if(fx<0)fx=0; else if(fx>W-1.001)fx=W-1.001;
+            if(fz<0)fz=0; else if(fz>W-1.001)fz=W-1.001;
+            const x0=fx|0, z0=fz|0, tx=fx-x0, tz=fz-z0;
+            const a=hs[x0+z0*W], b=hs[x0+1+z0*W], c=hs[x0+(z0+1)*W], d=hs[x0+1+(z0+1)*W];
+            return (a+(b-a)*tx)*(1-tz)+(c+(d-c)*tx)*tz;
+        };
+        // === [真实感] 第二遍: 梯度 / 岩石 / 曲率 / AO / 风积雪 / 雪线 / 土雪交融 ===
+        const GSPAN=Math.max(1, Math.round(1.5/step));   // 差分跨度(≈1.5 世界单位)
+        const AO_D=[[2,0],[-2,0],[0,2],[0,-2],[4,3],[-4,3],[3,-4],[-3,-4]];
+        for(let iy=0;iy<W;iy++){
+            for(let ix=0;ix<W;ix++){
+                const i=ix+iy*W, h0=hs[i];
+                // [FIX-LOD接缝] 曲率/AO 用固定世界偏移(1.5u)采样连续表面, 与 chunk 精度无关
+                const _wlx=pos.getX(i), _wlz=pos.getZ(i), WU=1.5;
+                let curv=((_hsAt(_wlx+WU,_wlz)+_hsAt(_wlx-WU,_wlz)+_hsAt(_wlx,_wlz+WU)+_hsAt(_wlx,_wlz-WU))*0.25-h0)*0.5;
+                if(curv>1)curv=1; else if(curv<-1)curv=-1;
+                let occ=0;
+                for(let k=0;k<8;k++){
+                    const dh=_hsAt(_wlx+AO_D[k][0]*WU, _wlz+AO_D[k][1]*WU)-h0;
+                    const d=Math.sqrt(AO_D[k][0]*AO_D[k][0]+AO_D[k][1]*AO_D[k][1])*WU;
+                    const s=dh/(Math.abs(dh)+d+0.001);       // -1..1 的"仰角"近似
+                    if(s>0)occ+=s;
+                }
+                let ao=1-occ*0.145; if(ao<0)ao=0; else if(ao>1)ao=1;
+                let drift=0.5+curv*0.55; if(drift<0)drift=0; else if(drift>1)drift=1;
+                // === 梯度: 在高度网格上做中心差分(跨度≈1.5 世界单位, 与旧版 eps 等效) ===
+                // [FIX-LOD接缝] 固定世界跨度 1.5 采样连续表面 -> 法线与 chunk 分辨率无关,
+                // 不同精度 chunk 交界处的法线突变亮线彻底消除
+                const _vlx=pos.getX(i), _vlz=pos.getZ(i), NSPAN=1.5;
+                const gx=(_hsAt(_vlx+NSPAN,_vlz)-_hsAt(_vlx-NSPAN,_vlz))/(2*NSPAN);
+                const gz=(_hsAt(_vlx,_vlz+NSPAN)-_hsAt(_vlx,_vlz-NSPAN))/(2*NSPAN);
+                const len=Math.sqrt(gx*gx+1+gz*gz);
+                const ny=1/len, nzz=-gz/len;             // 与片元着色器 vSlope / N.z 定义严格对齐
+                const slopeF=1-ny;
+                const gl=(h0-540)/40;
+                const glacier=gl<=0?0:gl>=1?1:gl*gl*(3-2*gl);       // smoothstep(540,580) 冰川
+                const s1=(slopeF-0.50)/0.35;
+                const rock=s1<=0?0:s1>=1?1:s1*s1*(3-2*s1);          // smoothstep(0.50,0.85) 陡坡出岩
+                const s2=(slopeF-0.90)/0.20;
+                const cliff=s2<=0?0:s2>=1?1:s2*s2*(3-2*s2);         // smoothstep(0.90,1.10) 悬崖
+                baked[i*4+1]=rock*255; baked[i*4+2]=cliff*255; baked[i*4+3]=glacier*255;
+                const lx=pos.getX(i), lz=pos.getZ(i);
+                // 低频噪声: 从 1/4 粗网格双线性插值
+                const cfx=(ix*step)/cstep, cfy=(iy*step)/cstep;
+                const cx0=cfx|0, cy0=cfy|0;
+                const cx1=(cx0<CW-1)?cx0+1:cx0, cy1=(cy0<CW-1)?cy0+1:cy0;
+                const ctx=cfx-cx0, cty=cfy-cy0;
+                const b00=cx0+cy0*CW, b10=cx1+cy0*CW, b01=cx0+cy1*CW, b11=cx1+cy1*CW;
+                const pt =(cPatch[b00]+(cPatch[b10]-cPatch[b00])*ctx)*(1-cty)
+                        +(cPatch[b01]+(cPatch[b11]-cPatch[b01])*ctx)*cty;
+                const sc =(cScree[b00]+(cScree[b10]-cScree[b00])*ctx)*(1-cty)
+                        +(cScree[b01]+(cScree[b11]-cScree[b01])*ctx)*cty;
+                const snR=(cSoil [b00]+(cSoil [b10]-cSoil [b00])*ctx)*(1-cty)
+                        +(cSoil [b01]+(cSoil [b11]-cSoil [b01])*ctx)*cty;
+                // === 裸土 / 碎石覆盖(地质: 板岩砂岩互层 -> 寒冻风化成片状碎石) ===
+                const altBand=Math.min(1, Math.max(0,(h0-150)/200));
+                let screeF=Math.pow(sc*0.5+0.5,1.6)*(0.25+0.95*altBand)*(0.35+0.85*Math.min(1,slopeF*1.5));
+                if(screeF>1)screeF=1;
+                const sn=snR*0.5+0.5;
+                let soilF=Math.min(1, altBand*0.85*(0.30+0.75*Math.min(1,slopeF*1.7))*(0.45+0.75*sn));
+                soilF*=0.65+0.35*Math.min(1,Math.max(0,(h0-60)/160));
+                if(soilF>1)soilF=1;
+                soil[i*4+1]=soilF*255;
+                soil[i*4+2]=screeF*255;
+                // === 雪线: 基础 + 坡向偏移 + 舌状雪斑扰动 + 凹处风积雪 ===
+                // 这是"土与雪交融"的核心: 雪线被噪声推上推下, 于是同一高度上
+                // 有的地方已全白、有的地方还露着棕褐的土和碎石, 形成融化中的碎斑带。
+                const nz2=nzz;
+                const snowLineEff=SNOW_HEIGHT - nz2*60 + pt*48 - drift*30;
+                const ss=(h0-(snowLineEff-15))/20;
+                const snow=ss<=0?0:ss>=1?1:ss*ss*(3-2*ss);
+                baked[i*4]=snow*255;
+                // 雪斑破碎度: 越靠近雪线, 雪越容易被撕碎(供 shader 二次打碎)
+                const trans=1.0-Math.abs(snow*2.0-1.0);
+                const brk=Math.min(1, Math.max(0, 0.5+pt*0.55))*0.35+trans*0.65;
+                // 融雪湿度: 雪线下方一带 + 凹处积水 -> 湿土/湿雪
+                const wet=Math.min(1, Math.max(0, trans*0.75+Math.max(0,curv)*0.35))*Math.min(1,Math.max(0,(h0-120)/120));
+                soil[i*4]  =brk*255;
+                soil[i*4+3]=wet*255;
+                const vary=0.5+0.5*Math.sin(lx*0.13)*Math.cos(lz*0.11);
+                extra[i*4]=ao*255; extra[i*4+1]=(curv*0.5+0.5)*255;
+                extra[i*4+2]=drift*255; extra[i*4+3]=vary*255;
+            }
+        }
+        geo.setAttribute('aData',  new THREE.BufferAttribute(baked,4,true));
+        geo.setAttribute('aExtra', new THREE.BufferAttribute(extra,4,true));
+        geo.setAttribute('aSoil',  new THREE.BufferAttribute(soil,4,true));
+        geo.computeVertexNormals();           // [3K] 平滑法线提升光影连续性
+        const mesh=new THREE.Mesh(geo, terrainMaterial);
+        mesh.position.set(this.cx*size+size/2, 0, this.cz*size+size/2);
+        mesh.receiveShadow=true;
+        mesh.castShadow=(this.ring<=5);   // 阴影相机只覆盖 ±260(≈4环), 更远的投影是纯浪费
+        scene.add(mesh);
+        this.meshes.push(mesh);
+    }
+    // [性能] 用已烘焙的高度网格双线性插值取高 —— 植被放置不再调用昂贵的 getTerrainHeight
+    sampleH(wx,wz){
+        const g=this.grid, W=this.gridW, st=this.gridStep;
+        if(!g) return getTerrainHeight(wx,wz);
+        let fx=(wx-this.cx*CHUNK_SIZE)/st, fz=(wz-this.cz*CHUNK_SIZE)/st;
+        if(fx<0)fx=0; else if(fx>W-1)fx=W-1;
+        if(fz<0)fz=0; else if(fz>W-1)fz=W-1;
+        const x0=fx|0, z0=fz|0;
+        const x1=(x0<W-1)?x0+1:x0, z1=(z0<W-1)?z0+1:z0;
+        const tx=fx-x0, tz=fz-z0;
+        const h00=g[x0+z0*W], h10=g[x1+z0*W], h01=g[x0+z1*W], h11=g[x1+z1*W];
+        return (h00+(h10-h00)*tx)*(1-tz)+(h01+(h11-h01)*tx)*tz;
+    }
+    slopeAt(wx,wz){
+        const e=this.gridStep||1.5;
+        const gx=(this.sampleH(wx+e,wz)-this.sampleH(wx-e,wz))/(2*e);
+        const gz=(this.sampleH(wx,wz+e)-this.sampleH(wx,wz-e))/(2*e);
+        return Math.sqrt(gx*gx+gz*gz);
+    }
+    createVegetation(){
+        const seed=this.cx*10000+this.cz*100;
+        const H=this.sampleH.bind(this), SL=this.slopeAt.bind(this);
+        if(this.ring>PERF.vegDist) return;          // 远处植被在雾中不可见 -> 跳过(零观感损失)
+        // === [真实感] 密度分档: 合批后每块地只 2 个 draw call, 预算全部换成密度 ===
+        const ring=this.ring;
+        const DENS=(ring<=1)?{tree:74,bush:92,rock:58,scree:215,ice:16}
+                 :(ring<=3)?{tree:44,bush:56,rock:36,scree:126,ice:10}
+                 :(ring<=5)?{tree:22,bush:28,rock:19,scree:66, ice:5}
+                           :{tree:9, bush:11,rock:10,scree:32, ice:2};
+        const smoothB=[], flatB=[], iceB=[];
+        const push=function(bucket,geo,x,y,z,rx,ry,rz,sx,sy,sz,c){
+            bucket.push({geo:geo,x:x,y:y,z:z,rx:rx,ry:ry,rz:rz,sx:sx,sy:sy,sz:sz,c:c});
+        };
+        // ---------- 1. 散生灌木 / 岩石 / 冰晶(按垂直带分布) ----------
+        const n=DENS.bush+DENS.rock;
+        for(let i=0;i<n;i++){
+            const lx=hash2(seed,i*7)*CHUNK_SIZE, lz=hash2(seed,i*11)*CHUNK_SIZE;
+            const wx=this.cx*CHUNK_SIZE+lx, wz=this.cz*CHUNK_SIZE+lz;
+            const h=H(wx,wz);
+            // [修复] 旧版 h<25 直接 continue —— 起点(2501m)周围 82% 因此完全没植被,
+            // 走出谷底才突然冒出一片林子, 看着像"一段有一段没有"。谷底本该最茂密。
+            if(h<1.5) continue;
+            const slope=SL(wx,wz);
+            if(slope>0.92) continue;
+            const r1=hash2(seed,i*13), r2=hash2(seed,i*17), r3=hash2(seed,i*19);
+            const altM=(h*5+2500);
+            if(altM>4320){
+                // 亚冰雪带: 裸岩 + 零星冰晶, 几乎没有植被(资料: 亚冰雪带盖度极低)
+                if(r1<0.30){
+                    const g=ROCK_GEOS[Math.floor(r2*ROCK_GEOS.length)];
+                    const s=0.8+r3*0.7;
+                    push(flatB,g,wx,h-0.15,wz,r1*6.28,r2*6.28,r3*6.28,s,s*(0.75+r1*0.5),s,pickCol(COL_ROCK,r3));
+                } else if(r1<0.42 && iceB.length<DENS.ice){
+                    const hh=0.6+r2*1.4;
+                    const g=cachedGeo('ic'+Math.round(hh*4),function(){return new THREE.ConeGeometry(0.2,hh,10);});
+                    push(iceB,g,wx,h+hh*0.4,wz,(r3-0.5)*0.4,0,(r2-0.5)*0.4,1,1,1,[0.80,0.89,1.00]);
+                }
+            } else if(altM>3780){
+                // 高山草甸 / 流石滩带: 灌丛矮化, 岩石裸露多
+                if(r1<0.34){
+                    const r=0.32+r2*0.34;
+                    const g=cachedGeo('bs'+Math.round(r*8),function(){return new THREE.SphereGeometry(r,8,6);});
+                    push(smoothB,g,wx,h+r*0.32,wz,0,r1*6.28,0,1,0.62,1,pickCol(COL_BUSH,r3));
+                } else if(r1<0.72){
+                    const g=ROCK_GEOS[Math.floor(r2*ROCK_GEOS.length)];
+                    const sc=0.7+r3*0.9;
+                    push(flatB,g,wx,h-0.12,wz,r1*6.28,r2*6.28,r3*6.28,sc,sc*(0.7+r2*0.5),sc,pickCol(COL_ROCK,r2));
+                }
+            } else if(altM>3200){
+                // 亚高山: 冷杉林线附近, 灌丛成片
+                if(r1<0.60){
+                    const r=0.5+r2*0.55;
+                    const g=cachedGeo('bs'+Math.round(r*8),function(){return new THREE.SphereGeometry(r,9,7);});
+                    push(smoothB,g,wx,h+r*0.32,wz,0,r1*6.28,0,1,0.66,1,pickCol(COL_BUSH,r3));
+                } else if(r1<0.78){
+                    const g=ROCK_GEOS[Math.floor(r2*ROCK_GEOS.length)];
+                    const sc=0.7+r3*1.0;
+                    push(flatB,g,wx,h-0.12,wz,r1*6.28,r2*6.28,r3*6.28,sc,sc*(0.75+r2*0.5),sc,pickCol(COL_ROCK,r2));
+                }
+            } else {
+                // 森林带下部: 林下灌丛 + 岩石
+                if(r1<0.52){
+                    const r=0.5+r2*0.6;
+                    const g=cachedGeo('bs'+Math.round(r*8),function(){return new THREE.SphereGeometry(r,9,7);});
+                    push(smoothB,g,wx,h+r*0.32,wz,0,r1*6.28,0,1,0.68,1,pickCol(COL_BUSH,r3));
+                } else if(r1<0.66){
+                    const g=ROCK_GEOS[Math.floor(r2*ROCK_GEOS.length)];
+                    const sc=0.7+r3*1.0;
+                    push(flatB,g,wx,h-0.12,wz,r1*6.28,r2*6.28,r3*6.28,sc,sc*(0.75+r2*0.5),sc,pickCol(COL_ROCK,r2));
+                }
+            }
+        }
+        // ---------- 2. 流石滩碎石堆(地质: 碎块石松散堆积斜坡 / 冰堆积碎块石) ----------
+        // 板岩碎片成片铺在坡面上, 簇集分布 —— 这是夹金山中高海拔最典型的表皮
+        for(let i=0;i<DENS.scree;i++){
+            const lx=hash2(seed,900+i*23)*CHUNK_SIZE, lz=hash2(seed,900+i*29)*CHUNK_SIZE;
+            const wx=this.cx*CHUNK_SIZE+lx, wz=this.cz*CHUNK_SIZE+lz;
+            const h=H(wx,wz);
+            if(h<40) continue;
+            const slope=SL(wx,wz);
+            if(slope<0.08||slope>1.15) continue;      // 太平的地方碎石留不住
+            // 簇集: 噪声高的地方成片, 低的地方零星
+            const cl=screeNoise.noise2D(wx*0.020, wz*0.020)*0.5+0.5;
+            const rnd=hash2(seed,900+i*31);
+            if(rnd>Math.pow(cl,0.75)*0.92+0.08) continue;
+            const g=SCREE_GEOS[Math.floor(hash2(seed,900+i*37)*SCREE_GEOS.length)];
+            const sz=(0.55+hash2(seed,900+i*41)*1.35)*(0.7+Math.min(1,slope)*0.8);
+            push(flatB,g,wx,h+sz*0.10,wz,
+                 (hash2(seed,900+i*43)-0.5)*0.5, hash2(seed,900+i*47)*6.28, (hash2(seed,900+i*53)-0.5)*0.5,
+                 sz*(0.8+hash2(seed,900+i*59)*0.6), sz, sz*(0.8+hash2(seed,900+i*61)*0.5),
+                 pickCol(COL_SCREE,hash2(seed,900+i*67)));
+        }
+        // ---------- 2b. 乱石堆(大石成堆聚集: 冰川搬运 / 寒冻崩解堆积) ----------
+        // 散点碎石只铺出"地表质感", 真正让人觉得"这山有脾气"的是一坨坨的石堆:
+        // 中心大石半埋、边缘小石散落、彼此叠压 —— 这是夹金山坡上最常见的形态
+        const boulderN=(ring<=1)?7:(ring<=3)?4:(ring<=5)?2:1;
+        for(let c=0;c<boulderN;c++){
+            const r1=hash2(seed,1200+c*17), r2=hash2(seed,1200+c*19), r3=hash2(seed,1200+c*23);
+            const bx=this.cx*CHUNK_SIZE+r1*CHUNK_SIZE, bz=this.cz*CHUNK_SIZE+r2*CHUNK_SIZE;
+            const bh=H(bx,bz);
+            if(bh<2) continue;
+            if(SL(bx,bz)>1.05) continue;
+            const altM=bh*5+2500;
+            // 高海拔流石滩石堆多, 低海拔主要在林间空地和坡脚
+            if(altM>3100 ? r3>0.92 : r3>0.45) continue;
+            const cnt=4+Math.floor(hash2(seed,1200+c*29)*8);
+            const cR=2.0+r1*3.2;
+            for(let j=0;j<cnt;j++){
+                const ang=hash2(seed,1200+c*31+j*11)*Math.PI*2;
+                const rad=Math.pow(hash2(seed,1200+c*37+j*13),0.70)*cR;
+                const wx=bx+Math.cos(ang)*rad, wz=bz+Math.sin(ang)*rad;
+                const h=H(wx,wz);
+                const g=ROCK_GEOS[Math.floor(hash2(seed,1200+c*41+j*17)*ROCK_GEOS.length)];
+                // 堆心大、边缘小; 半埋进土里才像"堆"而不像"摆"
+                const big=1.0-Math.pow(rad/(cR+0.001),1.5)*0.45;
+                const sc=(0.85+hash2(seed,1200+c*43+j*19)*1.75)*big;
+                const sink=sc*0.30*(0.35+hash2(seed,1200+c*47+j*23)*0.65);
+                push(flatB,g,wx,h-sink,wz,
+                     (hash2(seed,1200+c*53+j*29)-0.5)*0.9,
+                      hash2(seed,1200+c*59+j*31)*6.28,
+                     (hash2(seed,1200+c*61+j*37)-0.5)*0.9,
+                     sc, sc*(0.72+hash2(seed,1200+c*67+j*41)*0.5), sc,
+                     pickCol(COL_ROCK,hash2(seed,1200+c*71+j*43)));
+            }
+        }
+        // ---------- 3. 森林(冷杉/云杉 + 混交林): 群落式密植 ----------
+        // 森林感靠"群落": 每块地若干群落中心, 群内大树/幼树混植, 群间留出林窗
+        const clusterN=(ring<=1)?7:(ring<=3)?5:(ring<=5)?3:2;
+        let planted=0;
+        for(let c=0;c<clusterN && planted<DENS.tree;c++){
+            const ccx=hash2(seed,300+c*31)*CHUNK_SIZE;
+            const ccz=hash2(seed,300+c*37)*CHUNK_SIZE;
+            const trees=6+Math.floor(hash2(seed,300+c*41)*6);
+            for(let j=0;j<trees && planted<DENS.tree;j++){
+                const ang=hash2(seed,300+c*53+j*7)*Math.PI*2;
+                const rad=Math.pow(hash2(seed,300+c*59+j*11),0.55)*15;
+                const lx=ccx+Math.cos(ang)*rad, lz=ccz+Math.sin(ang)*rad;
+                const wx=this.cx*CHUNK_SIZE+lx, wz=this.cz*CHUNK_SIZE+lz;
+                const h=H(wx,wz);
+                const altM=h*5+2500;
+                // [修复] 旧版下限 2560m 把起点(2501m)整片划成无树区, 是斑秃的另一半原因。
+                // 真实夹金山 2500m 已是针阔混交林, 一直上到约 3700m 林线。
+                if(altM>3700) continue;
+                if(Math.abs(wx-100)<15) continue;       // 避让登山小路, 防树冠贴脸
+                const sl=SL(wx,wz);
+                if(sl>0.66) continue;
+                if(hash2(seed,300+c*61+j*13)<0.10) continue;   // 林窗
+                const sd=seed*1.7+c*97+j*13;
+                // [真实感] 枯立木: 冷杉林里风倒/雪压死的灰白站杆, 森林真实感的关键层次
+                const isSnag=hash2(sd,211)<0.13;
+                // 树高 ~21~38m(1 unit=5m); 越高越矮(林线附近树木矮化)
+                const dwarf=Math.min(1,Math.max(0,(altM-3100)/520));
+                let th=(4.2+hash2(sd,1)*3.4)*(1.0-dwarf*0.42);
+                const tr=0.13+hash2(sd,2)*0.09, br=0.26+hash2(sd,3)*0.12;
+                const bs=0.75+hash2(sd,99)*0.55;
+                const colT=isSnag?[0.31,0.29,0.26]:pickCol(COL_TRUNK,hash2(sd,4));
+                // [色彩层次] 3000m 以下掺入阔叶树: 树冠更宽更圆、叶色偏黄绿/秋色,
+                // 否则从起点到山顶一路同一个深绿, 看着就"单调"
+                const isBroad=(altM<3000)&&(hash2(sd,88)<0.42);
+                const colC=isSnag?[0.34,0.33,0.29]
+                          :(isBroad?pickCol(COL_BROAD,hash2(sd,7)):pickCol(COL_CANOPY,hash2(sd,7)));
+                if(isSnag) th*=0.72;   // 枯树多半断头
+                if(isBroad) th*=0.82;  // 阔叶树略矮于冷杉
+                // 树干
+                const gTr=cachedGeo('tr'+Math.round(th*2)+'_'+Math.round(tr*20)+'_'+Math.round(br*20),
+                          function(){return new THREE.CylinderGeometry(tr,br,th*0.4,8);});
+                push(smoothB,gTr,wx,h+th*0.2*bs,wz,0,0,0,bs,bs,bs,colT);
+                if(isBroad){
+                    // 阔叶树: 2~3 团球形树冠叠成饱满的团状, 轮廓明显区别于塔形冷杉
+                    const blobs=2+Math.floor(hash2(sd,31)*2);
+                    for(let b=0;b<blobs;b++){
+                        const br=th*(0.30+hash2(sd,b*7)*0.14);
+                        const gBl=cachedGeo('bl'+Math.round(br*4),
+                                  function(){return new THREE.SphereGeometry(br,10,8);});
+                        const offx=(hash2(sd,b*11)-0.5)*th*0.34, offz=(hash2(sd,b*13)-0.5)*th*0.34;
+                        push(smoothB,gBl,wx+offx,h+(th*0.55+b*th*0.20)*bs,wz+offz,
+                             0,hash2(sd,100)*6.28,0,bs,bs*0.85,bs,colC);
+                    }
+                }else{
+                    // 塔形树冠(冷杉: 层层收窄); 枯立木只剩 1~2 层残枝
+                    const layers=isSnag?(1+Math.floor(hash2(sd,21)*2)):(4+Math.floor(hash2(sd,7)*2));
+                    let layerY=th*0.30;
+                    for(let l=0;l<layers;l++){
+                        const lh=Math.max(0.9, th*(0.32-hash2(sd,l*3)*0.06)*(1-l*0.12));
+                        const lr=Math.max(0.4, 0.9+hash2(sd,l*5)*0.55-l*0.11);
+                        const gCn=cachedGeo('cn'+Math.round(lr*4)+'_'+Math.round(lh*4),
+                                  function(){return new THREE.ConeGeometry(lr,lh,10);});
+                        push(smoothB,gCn,wx,h+(layerY+lh*0.4)*bs,wz,0,hash2(sd,100)*6.28,0,bs,bs,bs,colC);
+                        layerY+=lh*0.5;
+                    }
+                }
+                planted++;
+            }
+        }
+        // ---------- 4. 雪堆(雪线附近的积雪堆, 强化"土雪交错") ----------
+        if(H(this.cx*CHUNK_SIZE+32, this.cz*CHUNK_SIZE+32)>SNOW_HEIGHT-70){
+            for(let i=0;i<10;i++){
+                const lx=hash2(seed,700+i*7)*CHUNK_SIZE, lz=hash2(seed,700+i*11)*CHUNK_SIZE;
+                const wx=this.cx*CHUNK_SIZE+lx, wz=this.cz*CHUNK_SIZE+lz;
+                const h=H(wx,wz);
+                if(h<SNOW_HEIGHT-80) continue;
+                if(hash2(seed,700+i*13)<0.45) continue;
+                const r=0.5+hash2(seed,700+i*17)*0.9;
+                const g=cachedGeo('sp'+Math.round(r*4),function(){return new THREE.SphereGeometry(r,9,7);});
+                push(smoothB,g,wx,h+0.08,wz,0,hash2(seed,700+i*19)*6.28,0,1,0.34,1,[0.95,0.97,1.00]);
+            }
+        }
+        // ---------- 5. 合批 -> 每块地最多 3 个 Mesh ----------
+        const self=this;
+        const emit=function(list,mat,castSh){
+            if(!list.length) return;
+            const g=mergeBatch(list);
+            if(!g) return;
+            const m=new THREE.Mesh(g,mat);
+            m.castShadow=castSh; m.receiveShadow=true;
+            m.userData.batched=true;
+            scene.add(m);
+            self.meshes.push(m);
+        };
+        emit(smoothB, MAT_VEG_SMOOTH, ring<=4);
+        emit(flatB,   MAT_VEG_FLAT,   ring<=4);
+        emit(iceB,    MAT_ICE_V,      false);
+    }
+    createSnowDetails(){
+        // 雪堆已并入 createVegetation 的合批流程(避免额外的独立 Mesh)
+    }
+    dispose(){
+        for(const m of this.meshes){
+            scene.remove(m);
+            m.traverse(o=>{
+                if(o.geometry && !(o.geometry.userData&&o.geometry.userData.shared)) o.geometry.dispose();
+                if(o.material && !(o.material.userData&&o.material.userData.shared)){
+                    if(Array.isArray(o.material)) o.material.forEach(mm=>mm.dispose());
+                    else if(o.material.dispose) o.material.dispose();
+                }
+            });
+        }
+        this.meshes=[];
+        this.grid=null;      // 释放高度网格引用, 便于 GC
+        this.disposed=true;
+    }
+}
+
+// ==================== [真实感] 植被合批: 顶点色 + 几何合并 ====================
+// 旧版每株树 5~6 个 Mesh、每块石头 1 个 Mesh —— 上千 draw call 把密度死死锁住,
+// 山看起来"稀稀拉拉"其实是预算不够, 不是不想加。
+// 改为"共享几何 + 逐实例变换 + 顶点色"合批: 每块地只留 2 个 draw call(平滑组 / 棱角组),
+// 省下的预算全部换成密度 —— 树 ×3、碎石堆全新加入、岩石 ×2。
+function mergeBatch(list){
+    let vCount=0, iCount=0, k;
+    for(k=0;k<list.length;k++){
+        const g=list[k].geo;
+        vCount+=g.attributes.position.count;
+        iCount+=g.index?g.index.count:g.attributes.position.count;
+    }
+    if(vCount===0) return null;
+    const pos=new Float32Array(vCount*3), nor=new Float32Array(vCount*3), col=new Float32Array(vCount*3);
+    const idx=(vCount>65534)?new Uint32Array(iCount):new Uint16Array(iCount);
+    const M=new THREE.Matrix4(), NM=new THREE.Matrix3(), Q=new THREE.Quaternion();
+    const Pv=new THREE.Vector3(), Sv=new THREE.Vector3(), Nv=new THREE.Vector3(), E=new THREE.Euler();
+    let vo=0, io=0;
+    for(k=0;k<list.length;k++){
+        const e=list[k], g=e.geo, pa=g.attributes.position, na=g.attributes.normal;
+        E.set(e.rx,e.ry,e.rz); Q.setFromEuler(E);
+        Pv.set(e.x,e.y,e.z); Sv.set(e.sx,e.sy,e.sz);
+        M.compose(Pv,Q,Sv); NM.getNormalMatrix(M);
+        const c=e.c;
+        for(let n=0;n<pa.count;n++){
+            Pv.set(pa.getX(n),pa.getY(n),pa.getZ(n)).applyMatrix4(M);
+            pos[(vo+n)*3]=Pv.x; pos[(vo+n)*3+1]=Pv.y; pos[(vo+n)*3+2]=Pv.z;
+            Nv.set(na.getX(n),na.getY(n),na.getZ(n)).applyMatrix3(NM).normalize();
+            nor[(vo+n)*3]=Nv.x; nor[(vo+n)*3+1]=Nv.y; nor[(vo+n)*3+2]=Nv.z;
+            col[(vo+n)*3]=c[0]; col[(vo+n)*3+1]=c[1]; col[(vo+n)*3+2]=c[2];
+        }
+        const gi=g.index;
+        if(gi){ for(let n=0;n<gi.count;n++) idx[io+n]=gi.getX(n)+vo; io+=gi.count; }
+        else  { for(let n=0;n<pa.count;n++) idx[io+n]=n+vo;          io+=pa.count; }
+        vo+=pa.count;
+    }
+    const out=new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    out.setAttribute('normal',   new THREE.BufferAttribute(nor,3));
+    out.setAttribute('color',    new THREE.BufferAttribute(col,3));
+    out.setIndex(new THREE.BufferAttribute(idx,1));
+    out.computeBoundingSphere();
+    return out;
+}
+function vcMat(rough, flat, metal){
+    const m=new THREE.MeshStandardMaterial({
+        vertexColors:true, roughness:rough, metalness:metal||0.0, flatShading:!!flat,
+        emissive:new THREE.Color(0x141a26), emissiveIntensity:0.55   // [修复] 夜间不再是纯黑
+    });
+    m.userData.shared=true;
+    return m;
+}
+// 平滑组: 树干 / 树冠 / 灌丛 / 雪堆(需要圆润光照)
+const MAT_VEG_SMOOTH=vcMat(0.93,false);
+// 棱角组: 岩石 / 碎石(flatShading 才有的硬朗块面感)
+const MAT_VEG_FLAT  =vcMat(0.90,true,0.06);
+// 冰晶保持半透明(数量少, 单独一个材质)
+const MAT_ICE_V     =vcMat(0.30,false,0.15);
+MAT_ICE_V.transparent=true; MAT_ICE_V.opacity=0.88;
+
+// === 颜色变体池: 按夹金山实际地物种色 ===
+const COL_TRUNK=[[0.26,0.17,0.09],[0.31,0.21,0.12],[0.23,0.15,0.08],[0.29,0.19,0.11],[0.33,0.22,0.13]];
+// 冷杉/云杉: 深绿带蓝灰; 混交林掺入秋色枯黄(资料: 山腰"彩林如火")
+const COL_CANOPY=[[0.09,0.16,0.09],[0.12,0.20,0.11],[0.08,0.14,0.08],[0.11,0.18,0.10],
+                  [0.10,0.17,0.12],[0.15,0.19,0.09],[0.17,0.16,0.07],[0.13,0.21,0.12]];
+// 灌丛/箭竹: 苍绿 ~ 枯黄交织(资料: 高山草甸"草色枯黄与苍绿交织")
+const COL_BUSH =[[0.24,0.32,0.14],[0.27,0.35,0.16],[0.20,0.28,0.12],[0.31,0.33,0.15],
+                 [0.36,0.34,0.16],[0.29,0.30,0.13]];
+// 岩石: 板岩(灰绿/紫灰) + 砂岩(浅褐) 互层
+const COL_ROCK =[[0.51,0.49,0.46],[0.46,0.48,0.45],[0.55,0.51,0.47],[0.48,0.45,0.43],[0.59,0.54,0.48],[0.44,0.47,0.47],[0.53,0.48,0.48]];
+// 阔叶/混交林: 起点一带(2500~3000m)是针阔混交, 叶色比冷杉亮、偏黄绿, 秋色掺入
+const COL_BROAD=[[0.24,0.36,0.14],[0.31,0.40,0.16],[0.28,0.34,0.13],[0.35,0.38,0.15],
+                 [0.38,0.36,0.14],[0.30,0.32,0.12],[0.42,0.34,0.13],[0.26,0.38,0.18],
+                 [0.44,0.40,0.16],[0.33,0.30,0.11]];
+// 碎石: 风化面更浅更灰, 带灰绿/紫调
+const COL_SCREE=[[0.44,0.42,0.38],[0.38,0.38,0.36],[0.48,0.45,0.40],[0.34,0.35,0.34],
+                 [0.40,0.41,0.39],[0.46,0.42,0.37],[0.36,0.37,0.36]];
+function pickCol(pool, r){ return pool[Math.min(pool.length-1, Math.floor(r*pool.length))]; }
+
+// === 共享几何池(合批只引用, 不复制) ===
+const _geoCache=new Map();
+function cachedGeo(key, factory){
+    let g=_geoCache.get(key);
+    if(!g){ g=factory(); g.userData.shared=true; _geoCache.set(key,g); }
+    return g;
+}
+// 板岩碎片: 压扁 + 顶点扰动 -> 片状、棱角分明(资料: 板岩为软岩, 风化成板状碎块)
+const SCREE_GEOS=(function(){
+    const arr=[];
+    for(let v=0;v<10;v++){
+        const g=new THREE.DodecahedronGeometry(0.5,0);
+        const p=g.attributes.position;
+        for(let i=0;i<p.count;i++){
+            p.setXYZ(i,
+                p.getX(i)+(hash3(v*17,i,1)-0.5)*0.50,
+                p.getY(i)*0.40+(hash3(v*17,i,2)-0.5)*0.10,
+                p.getZ(i)+(hash3(v*17,i,3)-0.5)*0.50);
+        }
+        g.computeVertexNormals(); g.userData.shared=true; arr.push(g);
+    }
+    return arr;
+})();
+// 大块岩石(基岩露头): 棱角更硬
+const ROCK_GEOS=(function(){
+    const arr=[];
+    for(let v=0;v<8;v++){
+        const g=new THREE.DodecahedronGeometry(0.5+v*0.18, 1);
+        const p=g.attributes.position;
+        for(let i=0;i<p.count;i++){
+            p.setXYZ(i,
+                p.getX(i)+(hash3(v*13,i,1)-0.5)*0.42,
+                p.getY(i)+(hash3(v*13,i,2)-0.5)*0.30,
+                p.getZ(i)+(hash3(v*13,i,3)-0.5)*0.42);
+        }
+        g.computeVertexNormals(); g.userData.shared=true; arr.push(g);
+    }
+    return arr;
+})();
+
+setLoad(55);
+
+// ==================== Layered Distant Mountains (Aerial Perspective) ====================
+// 用多张图元大圆锥实现远山分层,每层色调更冷更蓝(大气透视)
+function buildDistantMountains(){
+    const group=new THREE.Group();
+    // 4 层,每层 80-100 座
+    // [3K] 5 层远山(更密更宏大) + 大气透视 + 雪顶 + 山肩
+    const layers=[
+        {dist:2400, count:70, hMin:180, hMax:300, tint:0.7, alpha:0.95},
+        {dist:3300, count:60, hMin:240, hMax:400, tint:0.52, alpha:0.82},
+        {dist:4400, count:50, hMin:320, hMax:540, tint:0.36, alpha:0.62},
+        {dist:5700, count:40, hMin:400, hMax:660, tint:0.26, alpha:0.44},
+        {dist:7200, count:30, hMin:480, hMax:780, tint:0.18, alpha:0.3}
+    ];
+    layers.forEach((layer, idx)=>{
+        for(let i=0;i<layer.count;i++){
+            const ang=i/layer.count*Math.PI*2+hash2(i,1+idx)*0.4;
+            const dist=layer.dist + (hash2(i,2+idx)-0.5)*450;
+            const h=layer.hMin+hash2(i,3+idx)*(layer.hMax-layer.hMin);
+            const w=200+hash2(i,4+idx)*280;
+            const geo=new THREE.ConeGeometry(w, h, 6+Math.floor(hash2(i,5+idx)*4), 1);
+            const col=new THREE.Color();
+            const t=layer.tint;
+            col.setRGB(0.38+t*0.42, 0.48+t*0.46, 0.72+t*0.28);
+            const mat=new THREE.MeshBasicMaterial({
+                color:col,
+                fog:true,
+                transparent:true,
+                opacity:layer.alpha,
+                depthWrite:false
+            });
+            const m=new THREE.Mesh(geo, mat);
+            m.userData.bo=layer.alpha; m.userData.bc=col.getHex();
+            const shoulder=(hash2(i,9+idx)-0.5)*h*0.15;  // [3K] 山肩偏移(金霞山面朝向)
+            m.position.set(Math.cos(ang)*dist, h*0.4+shoulder, Math.sin(ang)*dist);
+            m.rotation.y=hash2(i,6+idx)*Math.PI*2;
+            group.add(m);
+            // [3K] 远山雪顶(高海拔层, 金霞时染金)
+            if(layer.tint<0.45 && hash2(i,7+idx)<0.6){
+                const snowTop=new THREE.Mesh(
+                    new THREE.ConeGeometry(w*0.32, h*0.22, 6),
+                    new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:layer.alpha*0.9, depthWrite:false, fog:true})
+                );
+                snowTop.position.set(m.position.x, h*0.78+shoulder, m.position.z);
+                snowTop.userData.bo=layer.alpha*0.9; snowTop.userData.bc=0xffffff;
+                group.add(snowTop);
+            }
+        }
+    });
+    return group;
+}
+const distantMountains=buildDistantMountains();
+scene.add(distantMountains);
+
+setLoad(65);
+
+// ==================== Volumetric Cloud Sea (Shader-based, not plane) ====================
+// 用自定义 shader 实现"漂浮的云海"效果:3D 噪点 + 多层 + 跟随玩家
+const cloudUniforms={
+    uTime:{value:0},
+    uSunDir:{value:sunDir.clone()},
+    uSunColor:{value:new THREE.Color(0xfff0d4)},
+    uCameraPos:{value:new THREE.Vector3()},
+    uDensity:{value:0.6},
+    uColor:{value:new THREE.Color(1,1,1)},
+    uGolden:{value:0.0}          // [FIX] 与着色器声明配套
+};
+const cloudMaterial=new THREE.ShaderMaterial({
+    uniforms:cloudUniforms,
+    transparent:true,
+    depthWrite:false,
+    side:THREE.DoubleSide,
+    fog:false,
+    vertexShader:`
+        varying vec3 vWorldPos;
+        void main(){
+            vWorldPos=(modelMatrix*vec4(position,1.0)).xyz;
+            gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
+        }
+    `,
+    fragmentShader:`
+        ${GLSL_TONEMAP}
+        varying vec3 vWorldPos;
+        uniform float uTime;
+        uniform vec3 uSunDir;
+        uniform vec3 uSunColor;
+        uniform vec3 uCameraPos;
+        uniform float uDensity;
+        uniform vec3 uColor;
+        uniform float uGolden;     // [FIX] 金霞染云(缺失会导致云层材质编译失败)
+
+        float hash3(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+        float vnoise(vec3 p){
+            vec3 i=floor(p),f=fract(p);
+            f=f*f*(3.0-2.0*f);
+            return mix(
+                mix(mix(hash3(i+vec3(0,0,0)),hash3(i+vec3(1,0,0)),f.x),
+                    mix(hash3(i+vec3(0,1,0)),hash3(i+vec3(1,1,0)),f.x),f.y),
+                mix(mix(hash3(i+vec3(0,0,1)),hash3(i+vec3(1,0,1)),f.x),
+                    mix(hash3(i+vec3(0,1,1)),hash3(i+vec3(1,1,1)),f.x),f.y),f.z);
+        }
+        float fbm(vec3 p){
+            float v=0.0,a=0.5;
+            for(int i=0;i<5;i++){v+=a*vnoise(p);p=p*2.1+1.3;a*=0.5;}
+            return v;
+        }
+
+        void main(){
+            vec3 p=vWorldPos*0.02 + vec3(uTime*0.01, 0.0, uTime*0.005);
+            float n=fbm(p);
+            float n2=fbm(p*2.0+vec3(13.0,0.0,7.0));
+            float n3=fbm(p*4.0+vec3(3.0,5.0,1.0));
+            float cloud=smoothstep(0.45, 0.7, n)*0.6
+                      + smoothstep(0.5, 0.75, n2)*0.3
+                      + smoothstep(0.55, 0.8, n3)*0.15;
+            cloud*=uDensity;
+            float sunFace=smoothstep(-0.3, 0.6, dot(normalize(vec3(n-n2, 0.5, 0.0)), uSunDir));
+            vec3 lit=uColor*mix(0.6, 1.15, sunFace);
+            lit=mix(lit, uSunColor*1.35, sunFace*0.65);
+            lit=mix(lit, vec3(1.0,0.72,0.42)*1.1, uGolden*0.7*sunFace);  // [3K] 金霞染云
+            // [真实感] 与地形/天空同一条曲线, 云不再是一片死白, 逆光边缘能透出厚度
+            // [修复-云硬边] 平面边缘径向衰减, 矩形边界融入天空
+            vec2 dcv=vWorldPos.xz-uCameraPos.xz;
+            cloud*=1.0-smoothstep(2600.0, 4200.0, length(dcv));
+            gl_FragColor=vec4(jlin2srgb(jACESFilm(jsrgb2lin(lit), 1.12)), clamp(cloud, 0.0, 0.88));
+        }
+    `
+});
+
+// [3K] 多层云(4 主体层 + 1 卷云层, 更大范围)
+const cloudLayers=[];
+for(let i=0;i<4;i++){
+    const seg=i===3?2:1;
+    const layer=new THREE.Mesh(
+        new THREE.PlaneGeometry(9000, 9000, seg, seg),
+        cloudMaterial
+    );
+    layer.rotation.x=-Math.PI/2;
+    layer.position.y=470+i*16;  // [FIX] 峰顶约450, 云海必须在山之上
+    layer.renderOrder=5+i;
+    layer.material=cloudMaterial;
+    scene.add(layer);
+    cloudLayers.push(layer);
+}
+// [3K] 卷云层(最高, 更薄, 被金霞染金)
+const cirrusLayer=new THREE.Mesh(
+    new THREE.PlaneGeometry(12000, 12000, 1, 1),
+    new THREE.ShaderMaterial({
+        uniforms:cloudUniforms, transparent:true, depthWrite:false, side:THREE.DoubleSide, fog:false,
+        vertexShader:cloudMaterial.vertexShader,
+        fragmentShader:cloudMaterial.fragmentShader.replace('clamp(cloud, 0.0, 0.88));','clamp(cloud*0.55, 0.0, 0.55));')
+    })
+);
+cirrusLayer.rotation.x=-Math.PI/2;
+cirrusLayer.position.y=560;
+cirrusLayer.renderOrder=9;
+scene.add(cirrusLayer);
+cloudLayers.push(cirrusLayer);
+
+setLoad(72);
+
+// ==================== [3K] Snow Particles (软精灵 + 视距 LOD + 冰晶) ====================
+const snowCount=PERF.snowMax;  // [3K] 按档位(最高 9000)
+function makeSnowTexture(){
+    const c=document.createElement('canvas'); c.width=c.height=64;
+    const x=c.getContext('2d');
+    const g=x.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0.0,'rgba(255,255,255,1.0)');
+    g.addColorStop(0.4,'rgba(255,255,255,0.85)');
+    g.addColorStop(1.0,'rgba(255,255,255,0.0)');
+    x.fillStyle=g; x.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+}
+const snowTex=makeSnowTexture();
+const snowGeo=new THREE.BufferGeometry();
+const snowPositions=new Float32Array(snowCount*3);
+const snowSize=new Float32Array(snowCount);
+const snowSeed=new Float32Array(snowCount);
+for(let i=0;i<snowCount;i++){
+    snowPositions[i*3]=(Math.random()-0.5)*220;
+    snowPositions[i*3+1]=Math.random()*100;   // 下落带高度 0~100(顶点着色器内做循环)
+    snowPositions[i*3+2]=(Math.random()-0.5)*220;
+    snowSize[i]=0.6+Math.random()*1.4;
+    snowSeed[i]=Math.random();
+}
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+snowGeo.setAttribute('aSize', new THREE.BufferAttribute(snowSize, 1));
+snowGeo.setAttribute('aSeed', new THREE.BufferAttribute(snowSeed, 1));
+const snowMat=new THREE.ShaderMaterial({
+    uniforms:{
+        uMap:{value:snowTex},
+        uOpacity:{value:0.92},
+        uTime:{value:0},
+        uPlayerPos:{value:new THREE.Vector3()},   // [性能-GPU雪] 玩家位置 uniform, 粒子围绕玩家循环
+        uWind:{value:0},                          // [性能-GPU雪] 风力统一传入, 暴雪时雪斜飞
+        uGolden:{value:0.0},
+        uGoldenColor:{value:new THREE.Color(0xffb060)}
+    },
+    vertexShader:`
+        attribute float aSize;
+        attribute float aSeed;
+        varying float vTwinkle;
+        uniform float uTime;
+        uniform vec3 uPlayerPos;
+        uniform float uWind;
+        void main(){
+            // [性能-GPU雪] 每粒子确定性随机(速度/摇摆/相位全部由种子推导), CPU 零遍历
+            float speed=3.0+fract(aSeed*1.618)*10.0;
+            float swayAmp=0.3+fract(aSeed*2.718)*0.5;
+            float swayFreq=1.2+fract(aSeed*3.142)*1.6;
+            vec3 pos=position;
+            // 下落: 以玩家为中心 100 单位循环带 [py-20, py+80]
+            float localY=mod(pos.y-uTime*speed, 100.0);
+            pos.y=uPlayerPos.y-20.0+localY;
+            // 水平: 基准偏移 + 摇摆 + 风力(每粒子风力系数不同, 暴雪呈斜飞幕布)
+            float wx=pos.x + sin(uTime*swayFreq+aSeed*6.28)*swayAmp + uWind*fract(aSeed*5.13);
+            float wz=pos.z + cos(uTime*swayFreq*0.7+aSeed*4.13)*swayAmp*0.6;
+            // 绕玩家水平循环 ±110
+            pos.x=uPlayerPos.x+mod(wx-uPlayerPos.x+110.0, 220.0)-110.0;
+            pos.z=uPlayerPos.z+mod(wz-uPlayerPos.z+110.0, 220.0)-110.0;
+            vec4 mv=modelViewMatrix*vec4(pos,1.0);
+            gl_PointSize=aSize*(320.0/-mv.z);
+            vTwinkle=0.7+0.3*sin(uTime*6.0+aSeed*40.0);
+            gl_Position=projectionMatrix*mv;
+        }
+    `,
+    fragmentShader:`
+        uniform sampler2D uMap;
+        uniform float uOpacity;
+        uniform float uGolden;
+        uniform vec3  uGoldenColor;
+        varying float vTwinkle;
+        void main(){
+            vec4 t=texture2D(uMap, gl_PointCoord);
+            if(t.a<0.05) discard;
+            vec3 col=mix(vec3(1.0), uGoldenColor, uGolden*0.5);
+            gl_FragColor=vec4(col, t.a*uOpacity*vTwinkle);
+        }
+    `,
+    transparent:true,
+    depthWrite:false
+});
+const snowSystem=new THREE.Points(snowGeo, snowMat);
+snowSystem.frustumCulled=false;
+scene.add(snowSystem);
+
+// === [3K] 冰晶/雾气体积粒子(近地薄雾, 增加氛围) ===
+const mistCount=400;
+const mistGeo=new THREE.BufferGeometry();
+const mistPos=new Float32Array(mistCount*3);
+for(let i=0;i<mistCount;i++){
+    mistPos[i*3]=(Math.random()-0.5)*180;
+    mistPos[i*3+1]=Math.random()*25;
+    mistPos[i*3+2]=(Math.random()-0.5)*180;
+}
+mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
+const mistMat=new THREE.PointsMaterial({
+    color:0xdce8f2, size:8, transparent:true, opacity:0.12, depthWrite:false, sizeAttenuation:true,
+    map:makeSnowTexture(), alphaTest:0.01
+});
+const mistSystem=new THREE.Points(mistGeo, mistMat);
+mistSystem.frustumCulled=false;
+scene.add(mistSystem);
+
+// ==================== Red Flags ====================
+function createFlag(x,z,scale,isBig){
+    const g=new THREE.Group();
+    const pole=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.1, 4*scale, 6),
+        new THREE.MeshStandardMaterial({color:0x3a2410, roughness:0.9})
+    );
+    pole.position.y=2*scale;
+    pole.castShadow=true;
+    g.add(pole);
+    const flagGeo=new THREE.PlaneGeometry(2.4*scale, 1.5*scale, 12, 6);
+    const flagMat=new THREE.MeshStandardMaterial({
+        color:0xc9202a, side:THREE.DoubleSide, roughness:0.7, emissive:0x330000
+    });
+    const flag=new THREE.Mesh(flagGeo, flagMat);
+    flag.position.set(1.2*scale, 3.4*scale, 0);
+    flag.castShadow=true;
+    g.add(flag);
+    flag.userData={isFlag:true};
+    if(isBig){
+        const starShape=new THREE.Shape();
+        const sr=0.3*scale, sp=5;
+        for(let i=0;i<sp*2;i++){
+            const a=i*Math.PI/sp-Math.PI/2;
+            const r=i%2===0?sr:sr*0.4;
+            if(i===0) starShape.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+            else starShape.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+        }
+        const starGeo=new THREE.ShapeGeometry(starShape);
+        const starMat=new THREE.MeshStandardMaterial({color:0xfff5a0, emissive:0x553300, side:THREE.DoubleSide});
+        const star=new THREE.Mesh(starGeo, starMat);
+        star.position.set(1.5*scale, 3.5*scale, 0.01);
+        g.add(star);
+    }
+    g.userData.flag=flag;
+    g.position.set(x, getTerrainHeight(x,z), z);
+    return g;
+}
+const flagMeshes=[];   // [PERF] 缓存旗面, 避免每帧 traverse 整个场景图
+FLAGS.forEach(f=>{
+    const fg=createFlag(f.x, f.z, f.scale, f.isBig);
+    scene.add(fg);
+    if(fg.userData && fg.userData.flag) flagMeshes.push(fg.userData.flag);
+});
+
+// ==================== Bonfires ====================
+function createBonfire(x,z){
+    const g=new THREE.Group();
+    const woodMat=new THREE.MeshStandardMaterial({color:0x3a2010, roughness:0.95});
+    for(let i=0;i<4;i++){
+        const w=new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.7, 8), woodMat);  // [3K] 木柴细分
+        w.position.set((Math.random()-0.5)*0.3, 0.2, (Math.random()-0.5)*0.3);
+        w.rotation.z=(Math.random()-0.5)*0.6;
+        w.rotation.y=Math.random()*Math.PI;
+        w.castShadow=true;
+        g.add(w);
+    }
+    const flameMat=new THREE.MeshBasicMaterial({color:0xff6622, transparent:true, opacity:0.75});
+    const flame=new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.0, 12), flameMat);  // [3K] 火焰细分
+    flame.position.y=0.7;
+    g.add(flame);
+    const flame2=new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.7, 6), new THREE.MeshBasicMaterial({color:0xffcc44, transparent:true, opacity:0.88}));
+    flame2.position.y=0.9;
+    g.add(flame2);
+    const light=new THREE.PointLight(0xff8844, 1.5, 15, 2);
+    light.position.y=1.0;
+    g.add(light);
+    g.userData={flame, flame2, light};
+    g.position.set(x, getTerrainHeight(x,z), z);
+    return g;
+}
+const bonfires=[];
+FIRES.forEach(f=>{
+    const bf=createBonfire(f.x, f.z);
+    scene.add(bf);
+    bonfires.push(bf);
+});
+
+// ==================== Footprints ====================
+const MAX_FOOTPRINTS=300;
+const footprintGeo=new THREE.CircleGeometry(0.2, 5);
+footprintGeo.rotateX(-Math.PI/2);
+const footprintMat=new THREE.MeshBasicMaterial({color:0x1a1410, transparent:true, opacity:0.4, depthWrite:false});
+const footprintSystem=new THREE.InstancedMesh(footprintGeo, footprintMat, MAX_FOOTPRINTS);
+footprintSystem.count=0;
+scene.add(footprintSystem);
+const footprintData=[];
+let lastFootprintPos=null;
+function addFootprint(x,y,z){
+    if(lastFootprintPos){
+        const dx=x-lastFootprintPos.x, dz=z-lastFootprintPos.z;
+        if(dx*dx+dz*dz<2.0) return;
+    }
+    const m=new THREE.Matrix4();
+    m.makeRotationY(Math.atan2(gameState.velocity.x, gameState.velocity.z));
+    m.setPosition(x, y+0.015, z);
+    footprintData.push({m, age:0});
+    if(footprintData.length>MAX_FOOTPRINTS) footprintData.shift();
+    lastFootprintPos={x, z};
+    footprintSystem.count=footprintData.length;
+    let i=0;
+    for(const fp of footprintData) footprintSystem.setMatrixAt(i++, fp.m);
+    footprintSystem.instanceMatrix.needsUpdate=true;
+}
+function updateFootprints(dt){
+    for(let i=footprintData.length-1;i>=0;i--){
+        footprintData[i].age+=dt;
+        if(footprintData[i].age>60) footprintData.splice(i,1);
+    }
+    footprintSystem.count=footprintData.length;
+    let i=0;
+    for(const fp of footprintData) footprintSystem.setMatrixAt(i++, fp.m);
+    footprintSystem.instanceMatrix.needsUpdate=true;
+}
+
+setLoad(85);
+
+const colliders=[];
+function addCollider(x,y,z,w,h,d,type){
+    colliders.push({x,y,z,w,h,d,type:type||'box'});
+}
+function checkCollision(pos,radius,height,skipTerrain){
+    const px=pos.x,py=pos.y,pz=pos.z;
+    for(let i=0;i<colliders.length;i++){
+        const c=colliders[i];
+        if(Math.abs(px-c.x)<c.w*0.5+radius&&Math.abs(pz-c.z)<c.d*0.5+radius&&py<c.y+c.h&&py+height>c.y){
+            return true;
+        }
+    }
+    return false;
+}
+
+// ==================== Minimap ====================
+const mapCanvas=document.getElementById('mapCanvas');
+const mapCtx=mapCanvas.getContext('2d');
+function updateMiniMap(){
+    const px=gameState.position.x, pz=gameState.position.z;
+    const scale=0.45;
+    mapCtx.fillStyle='rgba(30,20,8,0.9)';
+    mapCtx.fillRect(0,0,90,90);
+    for(let mx=0;mx<90;mx+=2){
+        for(let my=0;my<90;my+=2){
+            const wx=px+(mx-45)/scale, wz=pz+(my-45)/scale;
+            const h=getTerrainHeight(wx,wz);
+            let r,g,b;
+            if(h>SNOW_HEIGHT+10){ const v=Math.min(255, 200+(h-SNOW_HEIGHT)*4); r=v; g=v; b=Math.min(255, v+15); }
+            else if(h>SNOW_HEIGHT){ const t=(h-SNOW_HEIGHT)/10; r=120+t*80; g=110+t*90; b=100+t*100; }
+            else if(h>55){ r=90+Math.floor(h); g=80+Math.floor(h*0.9); b=70+Math.floor(h*0.7); }
+            else { r=50+Math.floor(h); g=70+Math.floor(h*0.9); b=40+Math.floor(h*0.6); }
+            mapCtx.fillStyle=`rgb(${r},${g},${b})`;
+            mapCtx.fillRect(mx,my,2,2);
+        }
+    }
+    CHECKPOINTS.forEach(cp=>{
+        const dx=(cp.x-px)*scale+45, dy=(cp.z-pz)*scale+45;
+        if(dx>=0&&dx<90&&dy>=0&&dy<90){
+            const done=gameState.reachedCheckpoints.has(cp.id);
+            mapCtx.fillStyle=done?'#66cc66':(cp.id===3?'#ff2222':'#ffaa44');
+            mapCtx.beginPath();
+            mapCtx.arc(dx,dy,cp.id===3?3.5:3,0,Math.PI*2);
+            mapCtx.fill();
+            // 标出编号, 已到达的打勾
+            mapCtx.fillStyle='#2a1a08';
+            mapCtx.font='bold 6px serif';
+            mapCtx.textAlign='center';
+            mapCtx.textBaseline='middle';
+            mapCtx.fillText(done?'\u2713':String(cp.id), dx, dy+0.5);
+        }
+    });
+    FIRES.forEach(f=>{
+        const dx=(f.x-px)*scale+45, dy=(f.z-pz)*scale+45;
+        if(dx>=0&&dx<90&&dy>=0&&dy<90){
+            mapCtx.fillStyle='#ffaa44';
+            mapCtx.fillRect(dx-1,dy-1,2,2);
+        }
+    });
+    mapCtx.fillStyle='#ff4444';
+    mapCtx.beginPath();
+    mapCtx.arc(45,45,3,0,Math.PI*2);
+    mapCtx.fill();
+    const dirX=Math.sin(gameState.rotation.y)*10;
+    const dirY=-Math.cos(gameState.rotation.y)*10;
+    mapCtx.strokeStyle='#ff4444';
+    mapCtx.lineWidth=1.5;
+    mapCtx.beginPath();
+    mapCtx.moveTo(45,45);
+    mapCtx.lineTo(45+dirX,45+dirY);
+    mapCtx.stroke();
+    mapCtx.strokeStyle='rgba(180,160,130,0.5)';
+    mapCtx.lineWidth=1;
+    mapCtx.strokeRect(0,0,90,90);
+}
+
+// ==================== Input Handling ====================
+const keys={};
+let joystickActive=false, joystickVec={x:0,y:0}, joyTouchId=null;
+let lookActive=false, lookDelta={x:0,y:0};
+let lookTouchId=null; let lastLookX=0, lastLookY=0;
+
+document.addEventListener('keydown', e=>{
+    keys[e.code]=true;
+    if(e.code==='ShiftLeft'||e.code==='ShiftRight')gameState.isSprinting=true;
+    if(e.code==='Space')keys.Space=true;
+    if(e.code==='KeyE'){
+        const nearFire=bonfires.find(b=>b.position.distanceTo(gameState.position)<6);
+        if(nearFire){
+            gameState.bodyTemp=Math.min(gameState.maxBodyTemp, gameState.bodyTemp+1.5);
+            gameState.cold=Math.max(0, gameState.cold-15);
+            showSubtitle('吃一口辣椒 —— 干辣椒就雪水,嘴里火辣,身上暖和了些。');
+        }
+    }
+});
+document.addEventListener('keyup', e=>{
+    keys[e.code]=false;
+    if(e.code==='ShiftLeft'||e.code==='ShiftRight')gameState.isSprinting=false;
+    if(e.code==='Space')keys.Space=false;
+});
+
+const joystickArea=document.getElementById('joystickArea');
+const joystickKnob=document.getElementById('joystickKnob');
+joystickArea.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    if(joyTouchId!==null)return;
+    const t=e.changedTouches[0];
+    joyTouchId=t.identifier;
+    joystickActive=true;
+    updateJoystick(t.clientX, t.clientY);
+}, {passive:false});
+joystickArea.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    if(!joystickActive)return;
+    for(let i=0;i<e.changedTouches.length;i++){
+        const t=e.changedTouches[i];
+        if(t.identifier===joyTouchId){
+            updateJoystick(t.clientX, t.clientY);
+            break;
+        }
+    }
+}, {passive:false});
+joystickArea.addEventListener('touchend', e=>{
+    e.preventDefault();
+    for(let i=0;i<e.changedTouches.length;i++){
+        if(e.changedTouches[i].identifier===joyTouchId){
+            joyTouchId=null;
+            joystickActive=false;
+            joystickVec={x:0,y:0};
+            joystickKnob.style.left='37px';
+            joystickKnob.style.top='37px';
+            break;
+        }
+    }
+});
+function updateJoystick(x,y){
+    const rect=joystickArea.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const dx=x-cx, dy=y-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const maxDist=35;
+    const clamped=Math.min(dist, maxDist);
+    const angle=Math.atan2(dy,dx);
+    joystickVec.x=Math.cos(angle)*(clamped/maxDist);
+    joystickVec.y=Math.sin(angle)*(clamped/maxDist);
+    joystickKnob.style.left=(37+joystickVec.x*35)+'px';
+    joystickKnob.style.top=(37+joystickVec.y*35)+'px';
+}
+document.addEventListener('touchstart', e=>{
+    for(let i=0;i<e.changedTouches.length;i++){
+        const t=e.changedTouches[i];
+        if(t.clientX>window.innerWidth*0.5&&t.clientY>window.innerHeight*0.25&&lookTouchId===null){
+            lookTouchId=t.identifier;
+            lookActive=true;
+            lookDelta={x:0,y:0};
+            lastLookX=t.clientX;
+            lastLookY=t.clientY;
+        }
+    }
+}, {passive:false});
+document.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    for(let i=0;i<e.changedTouches.length;i++){
+        const t=e.changedTouches[i];
+        if(t.identifier===lookTouchId){
+            const dx=t.clientX-lastLookX; const dy=t.clientY-lastLookY;
+            lookDelta.x+=dx; lookDelta.y+=dy;
+            lastLookX=t.clientX; lastLookY=t.clientY;
+        }
+    }
+}, {passive:false});
+document.addEventListener('touchend', e=>{
+    for(let i=0;i<e.changedTouches.length;i++){
+        if(e.changedTouches[i].identifier===lookTouchId){
+            lookTouchId=null;
+            lookActive=false;
+            lookDelta={x:0,y:0};
+        }
+    }
+});
+const jumpBtn=document.getElementById('jumpBtn');
+jumpBtn.addEventListener('touchstart', e=>{e.preventDefault();keys.Space=true;}, {passive:false});
+jumpBtn.addEventListener('touchend', e=>{e.preventDefault();keys.Space=false;}, {passive:false});
+const sprintBtn=document.getElementById('sprintBtn');
+sprintBtn.addEventListener('touchstart', e=>{e.preventDefault();gameState.isSprinting=true;}, {passive:false});
+sprintBtn.addEventListener('touchend', e=>{e.preventDefault();gameState.isSprinting=false;}, {passive:false});
+document.addEventListener('mousemove', e=>{
+    if(document.pointerLockElement===document.body){
+        lookDelta.x+=e.movementX;
+        lookDelta.y+=e.movementY;
+    }
+});
+document.addEventListener('click', ()=>{
+    if(!document.pointerLockElement&&window.innerWidth>768){
+        document.body.requestPointerLock();
+    }
+});
+
+function resolveCollision(oldPos, newPos, radius, height){
+    let result=newPos.clone();
+    const groundH=getTerrainHeight(result.x, result.z);
+    const targetY=groundH+height;
+    if(result.y<=targetY){
+        result.y=targetY;
+        if(gameState.velocity.y<0) gameState.velocity.y=0;
+        gameState.isGrounded=true;
+    }else{
+        gameState.isGrounded=false;
+    }
+    const testPos=result.clone();
+    testPos.y=Math.max(testPos.y, targetY);
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    for(let i=0;i<dirs.length;i++){
+        const dx=dirs[i][0], dz=dirs[i][1];
+        testPos.x=result.x+dx*radius*0.5;
+        testPos.z=result.z+dz*radius*0.5;
+        if(checkCollision(testPos, radius, height, true)){
+            if(dx!==0)result.x=oldPos.x;
+            if(dz!==0)result.z=oldPos.z;
+        }
+    }
+    const finalGround=getTerrainHeight(result.x, result.z);
+    if(result.y<finalGround+height){
+        result.y=finalGround+height;
+        gameState.velocity.y=0;
+        gameState.isGrounded=true;
+    }
+    return result;
+}
+
+let lastChunkX=-99999, lastChunkZ=-99999;
+const chunkQueue=[];                       // 待构建队列(按到玩家的距离排序)
+function updateChunks(){
+    const cx=Math.floor(gameState.position.x/CHUNK_SIZE);
+    const cz=Math.floor(gameState.position.z/CHUNK_SIZE);
+    if(cx!==lastChunkX||cz!==lastChunkZ){
+        lastChunkX=cx; lastChunkZ=cz;
+        const needed=new Set();
+        for(let x=-RENDER_DISTANCE;x<=RENDER_DISTANCE;x++){
+            for(let z=-RENDER_DISTANCE;z<=RENDER_DISTANCE;z++){
+                needed.add((cx+x)+','+(cz+z));
+            }
+        }
+        for(const [key,chunk] of chunks){
+            if(!needed.has(key)){ chunk.dispose(); chunks.delete(key); }
+        }
+        // 重建队列: 近的先建(脚下的地面立刻出现, 远处渐进铺开)
+        chunkQueue.length=0;
+        const list=[];
+        for(const key of needed){
+            if(!chunks.has(key)){
+                const p=key.split(',');
+                const kx=parseInt(p[0]), kz=parseInt(p[1]);
+                const dx=kx-cx, dz=kz-cz;
+                list.push({key:key, kx:kx, kz:kz, d:dx*dx+dz*dz});
+            }
+        }
+        list.sort(function(a,b){return a.d-b.d;});
+        for(let i=0;i<list.length;i++) chunkQueue.push(list[i]);
+    }
+    // [性能] 顶点预算制: 不再固定"每帧 N 块"(近处块顶点数是远处的 200 倍, 同样构建
+    // 一块, 开销天差地别)。改为每帧给一个顶点预算, 建到预算用完为止 ——
+    // 近处大块自动一次只建一块, 远处小块可以多建, 单帧耗时被压成常数。
+    let budget=PERF.chunkBudget||26000;
+    while(chunkQueue.length>0 && budget>0){
+        const it=chunkQueue.shift();
+        const ncx=Math.floor(gameState.position.x/CHUNK_SIZE), ncz=Math.floor(gameState.position.z/CHUNK_SIZE);
+        if(Math.abs(it.kx-ncx)>RENDER_DISTANCE||Math.abs(it.kz-ncz)>RENDER_DISTANCE) continue;  // 已离开视野
+        if(chunks.has(it.key)) continue;
+        const r=chunkResFor(it.kx,it.kz);
+        budget-=(r+1)*(r+1);
+        chunks.set(it.key, new Chunk(it.kx, it.kz));
+    }
+}
+
+setLoad(95);
+updateChunks();
+setLoad(100);
+
+// ==================== Weather System ====================
+const WEATHERS={
+    clear:{name:'晴朗',  wind:0.3, snowAlpha:0.4, coldMult:1.0, fogDens:0.0008, color:0x87CEEB, skyAlpha:0.5, lightMult:1.0},
+    cloudy:{name:'多云', wind:0.6, snowAlpha:0.6, coldMult:1.3, fogDens:0.0028, color:0x9aa8b8, skyAlpha:0.85, lightMult:0.7},
+    foggy:{name:'大雾',  wind:0.2, snowAlpha:0.5, coldMult:1.4, fogDens:0.012, color:0xbac8d0, skyAlpha:0.95, lightMult:0.5},
+    blizzard:{name:'暴风雪',wind:1.5, snowAlpha:1.0, coldMult:2.2, fogDens:0.006, color:0xb8c4d0, skyAlpha:1.0, lightMult:0.4}
+};
+const WEATHER_KEYS=Object.keys(WEATHERS);
+function pickWeather(curId){
+    const idx=WEATHER_KEYS.indexOf(curId);
+    let next;
+    do{ next=WEATHER_KEYS[Math.floor(Math.random()*WEATHER_KEYS.length)]; }
+    while(next===curId && Math.random()<0.5);
+    return next;
+}
+// [地面积雪] 不同天气的平衡积雪量: 暴风雪堆满, 晴天只剩阴坡残雪
+const SNOW_ACCUM_TARGET={blizzard:1.0, cloudy:0.62, foggy:0.52, clear:0.38};
+function updateSnowAccum(dt){
+    const tgt=SNOW_ACCUM_TARGET[gameState.weatherId]!==undefined
+        ? SNOW_ACCUM_TARGET[gameState.weatherId] : 0.2;
+    const cur=gameState.snowAccum;
+    // 积雪慢(雪要一片片堆), 消融更慢(化雪比下雪费时) —— 这样天气转晴后
+    // 地上还会留一阵子残雪, 而不是瞬间消失
+    const rate=(tgt>cur)?0.055:0.022;
+    gameState.snowAccum+= (tgt-cur)*Math.min(1, dt*rate);
+    if(gameState.snowAccum<0)gameState.snowAccum=0;
+    else if(gameState.snowAccum>1)gameState.snowAccum=1;
+    // 消融中的残雪更斑驳(数值越接近"正在化开"越碎)
+    const melting=(tgt<cur)?1.0:0.0;
+    gameState.snowMelt+=(melting-gameState.snowMelt)*Math.min(1, dt*0.03);
+    terrainUniforms.uSnowAccum.value=gameState.snowAccum;
+    terrainUniforms.uSnowMelt.value =gameState.snowMelt;
+}
+function updateWeather(dt){
+    updateSnowAccum(dt);
+    gameState.weatherTimer-=dt;
+    if(gameState.weatherTimer<=0){
+        const newId=pickWeather(gameState.weatherId);
+        if(newId!==gameState.weatherId){
+            const w=WEATHERS[newId];
+            gameState.weatherId=newId;
+            gameState.totalWeatherChanges++;
+            showSubtitle(`天气变化 —— 转为「${w.name}」`);
+        }
+        gameState.weatherTimer=30+Math.random()*60;
+    }
+}
+
+// ==================== Audio (WebAudio) ====================
+let audioCtx=null;
+function initAudio(){
+    if(audioCtx) return;
+    try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+}
+function playWind(level){
+    if(!audioCtx) return;
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    if(!playWind._node){
+        const buf=audioCtx.createBuffer(1, audioCtx.sampleRate*2, audioCtx.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.3;
+        const src=audioCtx.createBufferSource(); src.buffer=buf; src.loop=true;
+        const filt=audioCtx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=400;
+        const g=audioCtx.createGain(); g.gain.value=0;
+        src.connect(filt); filt.connect(g); g.connect(audioCtx.destination);
+        src.start();
+        playWind._node={src, g, filt};
+    }
+    playWind._node.g.gain.value=Math.min(0.15, level*0.08);
+    playWind._node.filt.frequency.value=200+level*600;
+}
+function playHowl(){
+    if(!audioCtx) return;
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const o=audioCtx.createOscillator(); o.type='sine'; o.frequency.value=180;
+    const o2=audioCtx.createOscillator(); o2.type='sine'; o2.frequency.value=220;
+    const g=audioCtx.createGain(); g.gain.value=0;
+    o.connect(g); o2.connect(g); g.connect(audioCtx.destination);
+    o.start(); o2.start();
+    o.frequency.linearRampToValueAtTime(280, audioCtx.currentTime+0.3);
+    o.frequency.linearRampToValueAtTime(160, audioCtx.currentTime+1.5);
+    g.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime+0.2);
+    g.gain.linearRampToValueAtTime(0, audioCtx.currentTime+1.8);
+    o.stop(audioCtx.currentTime+2); o2.stop(audioCtx.currentTime+2);
+}
+document.addEventListener('click', initAudio, {once:true});
+document.addEventListener('touchstart', initAudio, {once:true});
+
+let subtitleTimer=null;
+function showSubtitle(text){
+    const el=document.getElementById('subtitleContainer');
+    const txt=document.getElementById('subtitleText');
+    txt.innerHTML=text;
+    el.style.display='flex';
+    txt.style.opacity='0';
+    txt.style.animation='none';
+    void txt.offsetWidth;
+    txt.style.animation='fadeIn 2.5s forwards';
+    if(subtitleTimer) clearTimeout(subtitleTimer);
+    subtitleTimer=setTimeout(()=>{el.style.display='none';}, 5000);
+}
+
+// ==================== 自适应性能(动态分辨率) ====================
+// 默认永远跑档位上限(最高 3K); 仅当实测帧率不足时临时降低内部渲染分辨率,
+// 帧率恢复后自动逐步还原 —— 属于"帧率/分辨率"的自动平衡, 而非固定降质。
+const perf={fps:60,frames:0,acc:0,scale:1.0,lastChange:0};
+function applyResolution(){
+    renderer.setPixelRatio(Math.max(0.55, Math.min(window.devicePixelRatio, PERF.dprCap)*perf.scale*PERF.resScale));  // [4K] resScale 超采样
+}
+function updateAdaptivePerf(dt){
+    perf.frames++; perf.acc+=dt;
+    if(perf.acc<1.0) return;
+    perf.fps=perf.frames/perf.acc;
+    perf.frames=0; perf.acc=0;
+    if(gameState.time-perf.lastChange<2.5) return;      // 冷却, 避免来回震荡
+    if(perf.fps<42 && perf.scale>0.55){
+        perf.scale=Math.max(0.55, perf.scale-0.15); perf.lastChange=gameState.time; applyResolution();
+    }else if(perf.fps>58 && perf.scale<1.0){
+        perf.scale=Math.min(1.0, perf.scale+0.10); perf.lastChange=gameState.time; applyResolution();
+    }
+}
+
+// ==================== Main Loop ====================
+let lastTime=0;
+let mapUpdateTimer=0;
+let howlTimer=0;
+
+function animate(time){
+    requestAnimationFrame(animate);
+    if(!gameState.gameStarted)return;
+    const delta=Math.min((time-lastTime)/1000, 0.1);
+    lastTime=time;
+    gameState.time+=delta;
+    updateAdaptivePerf(delta);
+    gameState.dayTime=(gameState.time/DAY_DURATION)%1;
+
+    const forward=new THREE.Vector3(0,0,-1);
+    const eulerY=new THREE.Euler(0, gameState.rotation.y, 0);
+    forward.applyEuler(eulerY);
+    const right=new THREE.Vector3(1,0,0);
+    right.applyEuler(eulerY);
+
+    let moveVec=new THREE.Vector3();
+    if(keys.KeyW||joystickVec.y<-0.3)moveVec.add(forward);
+    if(keys.KeyS||joystickVec.y>0.3)moveVec.sub(forward);
+    if(keys.KeyA||joystickVec.x<-0.3)moveVec.sub(right);
+    if(keys.KeyD||joystickVec.x>0.3)moveVec.add(right);
+
+    gameState.isMoving=moveVec.length()>0.1;
+
+    if(gameState.isMoving){
+        moveVec.normalize();
+        const spd=gameState.isSprinting&&gameState.stamina>0?SPRINT_SPEED:BASE_SPEED;
+        gameState.velocity.x=moveVec.x*spd;
+        gameState.velocity.z=moveVec.z*spd;
+        if(gameState.isSprinting)gameState.stamina=Math.max(0, gameState.stamina-delta*14);
+    }else{
+        gameState.velocity.x*=0.82;
+        gameState.velocity.z*=0.82;
+        gameState.stamina=Math.min(100, gameState.stamina+delta*8);
+    }
+
+    if(keys.Space&&gameState.isGrounded&&gameState.jumpCooldown<=0){
+        gameState.velocity.y=JUMP_FORCE;
+        gameState.isGrounded=false;
+        gameState.jumpCooldown=0.4;
+    }
+    if(gameState.jumpCooldown>0)gameState.jumpCooldown-=delta;
+    gameState.velocity.y-=GRAVITY*delta;
+
+    const oldPos=gameState.position.clone();
+    const newPos=gameState.position.clone();
+    newPos.x+=gameState.velocity.x*delta;
+    newPos.z+=gameState.velocity.z*delta;
+    newPos.y+=gameState.velocity.y*delta;
+    gameState.position=resolveCollision(oldPos, newPos, 0.5, PLAYER_HEIGHT);
+
+    if(gameState.isMoving && gameState.isGrounded){
+        addFootprint(gameState.position.x, getTerrainHeight(gameState.position.x, gameState.position.z), gameState.position.z);
+    }
+    updateFootprints(delta);
+
+    camera.position.copy(gameState.position);
+    camera.rotation.copy(gameState.rotation);
+
+    if(lookActive||document.pointerLockElement){
+        const sens=0.0022;
+        gameState.rotation.y-=lookDelta.x*sens;
+        gameState.rotation.x-=lookDelta.y*sens;
+        gameState.rotation.x=Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, gameState.rotation.x));
+        lookDelta={x:0,y:0};
+    }
+
+    // === 太阳阴影跟随 ===
+    sunLight.position.set(gameState.position.x+sunDir.x*400, sunDir.y*400, gameState.position.z+sunDir.z*400);
+    sunLight.target.position.copy(gameState.position);
+    sunLight.target.updateMatrixWorld();
+    const sh=sunLight.shadow.camera;
+    sh.left=gameState.position.x-500;
+    sh.right=gameState.position.x+500;
+    sh.top=gameState.position.z+500;
+    sh.bottom=gameState.position.z-500;
+    sunLight.shadow.camera.updateProjectionMatrix();
+
+    // === 天气 ===
+    updateWeather(delta);
+    const w=WEATHERS[gameState.weatherId];
+
+    // === 时间系统 ===
+    const t=gameState.dayTime;
+    const sunY=Math.sin(t*Math.PI*2);
+    const sunAng=t*Math.PI*2;
+    sunDir.set(Math.cos(sunAng), Math.max(sunY, -0.2), Math.sin(sunAng)*0.4).normalize();
+    const isNight=sunY<-0.05;
+
+    // === 金霞强度: 日出日落前后峰值(提前算, 供光照/云/雾共用) ===
+    let golden=0.0;
+    if(sunY>=-0.15 && sunY<0.3){
+        const gt=Math.max(0, 1.0-Math.abs(sunY-0.02)/0.28);
+        golden=Math.min(1, gt*1.15);
+    }
+    // 太阳强度:白天强,夜晚 0; [金霞] 日出日落保持低角度暖阳, 否则山体全黑剪影
+    let dayIntensity=Math.max(0, sunY);
+    if(t<0.25 || t>0.75){
+        // 黄昏/黎明
+        const tn=t<0.25?t:t-1;
+        dayIntensity=Math.max(0, Math.sin(tn*Math.PI*2)*0.5);
+    }
+    dayIntensity=Math.max(dayIntensity, golden*0.62);
+    // [真实感] 光强按 ACES 曲线重新标定: 原来 ×4.0 会把雪面/岩石直接推到死白, 高光没有任何层次
+    const sunLightMult=dayIntensity * w.lightMult * 1.35;
+    sunLight.intensity=sunLightMult + (isNight?0.22:0);   // [修复] 夜晚月光, 不再死黑
+    hemiLight.intensity=(isNight?0.28:Math.max(0.08, dayIntensity*0.26+0.06)) * (0.4+w.lightMult*0.6);
+    fillLight.intensity=Math.max(0.05, dayIntensity*0.14);
+
+    // 太阳颜色(黄昏偏橙,正午偏白)
+    let sunCol;
+    if(sunY>0.3){
+        sunCol=new THREE.Color(0xfff5d4); // 正午暖白
+    } else if(sunY>-0.05){
+        sunCol=new THREE.Color().setHSL(0.055, 0.92, 0.5+dayIntensity*0.18); // [金霞] 低角度深橙
+    } else {
+        sunCol=new THREE.Color(0x6080a0); // 夜晚冷蓝
+    }
+    sunLight.color.copy(sunCol);
+    skyUniforms.uSunColor.value.copy(sunCol);
+    skyUniforms.uSunDir.value.copy(sunDir);
+    skyUniforms.uSunIntensity.value=Math.max(dayIntensity*1.5, golden*1.1);  // [金霞] 地平线太阳不熄灭
+    skyUniforms.uTime.value=gameState.time*0.02;
+    skyUniforms.uStars.value=isNight?0.9:0.0;
+    skyUniforms.uMoonAlpha.value=isNight?1.0:0.0;
+    skyUniforms.uNight.value=THREE.MathUtils.clamp((-sunY-0.03)/0.2, 0, 1);  // [FIX-夜黑碎片] 平滑过渡
+
+    // 太阳天空盒位置更新
+    skyUniforms.uZenith.value.setHSL(0.6, 0.7, 0.3+dayIntensity*0.2);
+    skyUniforms.uHorizon.value.setHSL(0.55, 0.5, 0.7+dayIntensity*0.15);
+
+    // (golden 已在上文计算)
+    skyUniforms.uGolden.value=golden;
+    gameState.golden=golden;  // [金霞] 供雪/雾粒子门控
+    skyUniforms.uCirrus.value=0.45+golden*0.5+w.skyAlpha*0.3;
+    skyUniforms.uTurbidity.value=2.0+golden*2.5;
+    const goldenCol=new THREE.Color().setHSL(0.06, 0.9, 0.5+golden*0.12);  // [金霞] 深金橙
+    skyUniforms.uGoldenColor.value.copy(goldenCol);
+
+    // 太阳 DOM glow
+    const sunGlowEl=document.getElementById('sunGlow');
+    sunGlowEl.style.opacity=Math.max(0, dayIntensity)*0.7 * w.lightMult;
+    const sgX=50+sunDir.x*30;
+    const sgY=85-sunDir.y*45;
+    const sgR=Math.floor(255);
+    const sgG=Math.floor(150+sunY*80);
+    const sgB=Math.floor(80+sunY*120);
+    sunGlowEl.style.background=`radial-gradient(ellipse at ${sgX}% ${sgY}%,rgba(${sgR},${sgG},${sgB},0.4)0%,transparent 55%)`;
+
+    document.getElementById('dayNightOverlay').style.opacity=isNight?0.7:0;
+
+    // 雾色随天气
+    scene.fog.density=w.fogDens;
+    scene.fog.color.setHex(w.color);
+    if(isNight) scene.fog.color.lerp(new THREE.Color(0x35496b), 0.55);  // [修复] 夜雾带月光蓝, 消黑碎片
+    if(t<0.25 || t>0.75){
+        const duskCol=new THREE.Color(0x806050);
+        scene.fog.color.lerp(duskCol, 0.5+golden*0.3);  // [金霞] 雾气也染金
+    }
+
+    // 雪粒子 — [性能-GPU雪] CPU 每帧只传 5 个 uniform, 不再遍历上万粒子+回写 108KB 缓冲
+    const px=gameState.position.x, pz=gameState.position.z, py=gameState.position.y;
+    snowMat.uniforms.uOpacity.value=0.45+w.snowAlpha*0.45;
+    snowMat.uniforms.uTime.value=gameState.time;
+    snowMat.uniforms.uPlayerPos.value.copy(gameState.position);
+    snowMat.uniforms.uWind.value=Math.sin(gameState.time*0.3)*w.wind*2.2+w.wind*0.6;
+    snowMat.uniforms.uGolden.value=golden;
+    snowMat.uniforms.uGoldenColor.value.copy(goldenCol);
+
+    // === [3K] 冰晶/雾气体积粒子(随高度/天气淡入) ===
+    if(mistSystem){
+        mistSystem.position.set(px, 0, pz);
+        const groundH=getTerrainHeight(px, pz);
+        const altitudeF=Math.max(0, Math.min(1, (groundH-120)/260));
+        mistMat.opacity=Math.min(0.11,(0.035+altitudeF*0.09)*(0.6+w.snowAlpha*0.7)*(1-(gameState.golden||0)*0.55));  // [金霞] 雾气不糊霞光
+        const mp=mistSystem.geometry.attributes.position.array;
+        for(let i=0;i<mistCount;i++){
+            mp[i*3+1]-=delta*0.4;
+            if(mp[i*3+1]<py-8) mp[i*3+1]=py+8+Math.random()*12;
+        }
+        mistSystem.geometry.attributes.position.needsUpdate=true;
+    }
+
+    // 红旗飘动([PERF] 只遍历已缓存的 3 面旗, 不再 traverse 全场景)
+    {
+        const t=gameState.time*3;
+        for(let fi=0;fi<flagMeshes.length;fi++){
+            const obj=flagMeshes[fi];
+            const pos=obj.geometry.attributes.position;
+            if(pos){
+                for(let i=0;i<pos.count;i++){
+                    const px0=pos.getX(i);
+                    pos.setZ(i, Math.sin(px0*4+t)*0.15*w.wind);
+                }
+                pos.needsUpdate=true;
+            }
+        }
+    }
+
+    // 篝火动画
+    bonfires.forEach(b=>{
+        const u=b.userData;
+        if(u.flame){
+            const s=0.8+Math.sin(gameState.time*8+b.position.x)*0.2;
+            u.flame.scale.set(s, 1+Math.sin(gameState.time*6+b.position.z)*0.15, s);
+            u.flame2.scale.set(s*0.8, 0.8+Math.sin(gameState.time*10)*0.2, s*0.8);
+        }
+    });
+
+    // 远山跟随
+    distantMountains.position.set(px, 0, pz);
+    // [修复-夜景远山] 夜间把低模远山压暗融入夜雾, 消除月光下的多边形楔形
+    if(distantMountains.userData.nf===undefined)distantMountains.userData.nf=1.0;
+    const _nt=isNight?0.35:1.0;
+    distantMountains.userData.nf+=(_nt-distantMountains.userData.nf)*Math.min(1,delta*2.0);
+    const _nf=distantMountains.userData.nf;
+    for(let _ci=0;_ci<distantMountains.children.length;_ci++){
+        const _cm=distantMountains.children[_ci];
+        if(_cm.userData.bo!==undefined){
+            _cm.material.opacity=_cm.userData.bo*_nf;
+            _cm.material.color.setHex(_cm.userData.bc).multiplyScalar(0.35+0.65*_nf);
+        }
+    }
+
+    // 云海
+    cloudUniforms.uTime.value=gameState.time;
+    cloudUniforms.uCameraPos.value.set(px, py, pz);
+    cloudUniforms.uDensity.value=(0.5+w.skyAlpha*0.4)*(1.0-golden*0.6);  // [金霞] 云盖让开霞光
+    cloudUniforms.uGolden.value=golden;   // [FIX] 金霞染云联动
+    cloudLayers.forEach((l, i)=>{
+        l.position.x=px;
+        l.position.z=pz;
+        l.visible=py < l.position.y+10;
+    });
+
+    // terrain shader uniforms
+    terrainUniforms.uSunDir.value.copy(sunDir);
+    terrainUniforms.uSunColor.value.copy(sunCol);
+    terrainUniforms.uSunIntensity.value=sunLightMult;
+    terrainUniforms.uTime.value=gameState.time;
+    terrainUniforms.uCameraPos.value.copy(camera.position);
+    // === [3K] 金霞 + 视距 + 粗糙度 + 雾色 ===
+    terrainUniforms.uGolden.value=golden;
+    terrainUniforms.uGoldenColor.value.copy(goldenCol);
+    terrainUniforms.uViewDistance.value=1500.0;
+    terrainUniforms.uSnowRoughness.value=0.78-w.snowAlpha*0.1;
+    terrainUniforms.uRockRoughness.value=0.92;
+    terrainUniforms.uSkyColor.value.copy(scene.fog.color).lerp(goldenCol, golden*0.45);
+    // === [真实感] 天空光 / 大气透视 / 曝光 与场景同步(原来这些值是写死的, 天光一变地形就不跟) ===
+    terrainUniforms.uSkyIntensity.value=0.28+dayIntensity*0.32;
+    terrainUniforms.uFogDensity.value=scene.fog.density;
+    terrainUniforms.uFogColor.value.copy(scene.fog.color);
+    terrainUniforms.uExposure.value=1.12;
+    terrainUniforms.uSnowRoughness.value=0.78-w.snowAlpha*0.10;   // 湿雪/新雪反光更强
+    // [FIX] 雪粒子强度 = 天气 × 海拔(山下几乎不可见)
+    const snowAlt=Math.max(0.12, Math.min(1, (getTerrainHeight(px,pz)-40)/140));
+    snowMat.uniforms.uOpacity.value=Math.min(0.92, 1.6*w.snowAlpha*snowAlt)*(1-(gameState.golden||0)*0.55)*(0.60+0.40*w.snowAlpha);  // [金霞] 霞光里雪点减半
+
+    // 寒冷 + 温度
+    const h=getTerrainHeight(px, pz);
+    const hf=Math.max(0, Math.min(1, (h-30)/220));
+    gameState.cold=Math.min(100, gameState.cold+delta*hf*0.3*w.coldMult);
+    // [FIX] 体温改为"环境温度目标 + 渐进趋近", 篝火/风寒都能真正作用
+    const envTemp=Math.max(30, 42-hf*20-gameState.cold*0.15);
+    gameState.bodyTemp+=(envTemp-gameState.bodyTemp)*Math.min(1, delta*0.12);
+    gameState.bodyTemp=Math.max(30, Math.min(42, gameState.bodyTemp));
+    bonfires.forEach(b=>{
+        const d=b.position.distanceTo(gameState.position);
+        if(d<5){
+            gameState.bodyTemp=Math.min(42, gameState.bodyTemp+delta*2.5);   // 篝火直接回温
+            gameState.cold=Math.max(0, gameState.cold-delta*20);
+        }
+    });
+
+    document.getElementById('frostOverlay').style.opacity=Math.max(0, gameState.cold/100)*0.7;
+
+    const breath=document.getElementById('breathFog');
+    const breathCtx=breath.getContext('2d');
+    const showBreath=gameState.cold>35||gameState.bodyTemp<35;
+    if(showBreath&&Math.random()>0.9){
+        breathCtx.clearRect(0,0,70,45);
+        breathCtx.fillStyle=`rgba(255,255,255,${0.12+gameState.cold/350})`;
+        breathCtx.beginPath();
+        breathCtx.arc(35+Math.sin(gameState.time*2.5)*10, 22+Math.cos(gameState.time*2)*6, 14+gameState.cold*0.1, 0, Math.PI*2);
+        breathCtx.fill();
+    }
+    breath.style.opacity=showBreath?0.7:0;
+
+    // t=0.25 应该是 12:00(正午太阳在顶),所以加 6 小时
+    const displayT=(t+0.25)%1;
+    const hours=Math.floor(displayT*24), mins=Math.floor((displayT*24%1)*60);
+    document.getElementById('gameTime').textContent=(hours<10?'0':'')+hours+':'+(mins<10?'0':'')+mins;
+    document.getElementById('coldBar').style.width=gameState.cold+'%';
+    document.getElementById('staminaBar').style.width=gameState.stamina+'%';
+    const tp=Math.max(0, Math.min(100, (gameState.bodyTemp-30)/12*100));
+    document.getElementById('tempBar').style.width=tp+'%';
+
+    const dist=Math.max(0, Math.floor(MOUNTAIN_PEAK-pz));
+    document.getElementById('distValue').textContent=dist+'m';
+
+    // === [检查点指引] 玩家此前完全不知道该往哪走 —— 明确给出下一个点: 名字 / 距离 / 方位 ===
+    {
+        const guide=document.getElementById('cpGuide');
+        // 找下一个未到达的检查点(按 id 顺序)
+        let next=null;
+        for(const cp of CHECKPOINTS){
+            if(!gameState.reachedCheckpoints.has(cp.id)){ next=cp; break; }
+        }
+        if(!next){
+            guide.style.display='none';
+        }else{
+            guide.style.display='block';
+            const ddx=next.x-gameState.position.x, ddz=next.z-gameState.position.z;
+            const d2=Math.sqrt(ddx*ddx+ddz*ddz);
+            document.getElementById('cpName').textContent=next.name;
+            document.getElementById('cpDist').innerHTML='还有 <b>'+Math.round(d2*5)+'</b> 米';
+            // 方位: 转成相对玩家朝向的指示箭头
+            const worldAng=Math.atan2(ddx, ddz);            // 目标在世界中的方位
+            let rel=worldAng-gameState.rotation.y;           // 相对视线方向
+            while(rel>Math.PI)rel-=Math.PI*2;
+            while(rel<-Math.PI)rel+=Math.PI*2;
+            const arrows=['↑ 正前方','↗ 右前方','→ 正右方','↘ 右后方','↓ 正后方','↙ 左后方','← 正左方','↖ 左前方'];
+            const idx=Math.round(((rel+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8;
+            document.getElementById('cpArrow').textContent=arrows[idx];
+        }
+        // 到达后旧"距山顶"改显示总进度
+    }
+    document.getElementById('altitude').textContent='海拔 '+Math.floor(h*5+2500)+'m';
+
+    let tn='硗碛藏族乡';
+    if(pz>400)tn='五道拐';
+    if(pz>700)tn='烧鸡窝';
+    if(pz>1000)tn='筲箕窝';
+    if(pz>1300)tn='一支箭';
+    if(pz>1600)tn='九坳十三坡';
+    if(pz>1900)tn='风雪垭口';
+    if(pz>2050)tn='达维 · 王母寨';
+    if(pz>2200)tn='雪山之巅';
+    if(tn!==gameState.terrainName){
+        gameState.terrainName=tn;
+        document.getElementById('terrainName').textContent=tn;
+    }
+
+    CHECKPOINTS.forEach(cp=>{
+        if(!gameState.reachedCheckpoints.has(cp.id)){
+            const dx=gameState.position.x-cp.x, dz=gameState.position.z-cp.z;
+            if(dx*dx+dz*dz<2500){
+                gameState.reachedCheckpoints.add(cp.id);
+                showSubtitle(`抵达 · ${cp.name}<br><br>${cp.desc}`);
+            }
+        }
+    });
+
+    // 罗盘
+    const cc=document.getElementById('compassCanvas');
+    const cctx=cc.getContext('2d');
+    cctx.clearRect(0,0,64,64);
+    cctx.save();
+    cctx.translate(32,32);
+    cctx.rotate(-gameState.rotation.y);
+    cctx.strokeStyle='rgba(180,160,130,0.4)';
+    cctx.lineWidth=1;
+    cctx.beginPath(); cctx.arc(0,0,28,0,Math.PI*2); cctx.stroke();
+    cctx.fillStyle='#d4c4a8';
+    cctx.font='bold 10px serif';
+    cctx.textAlign='center';
+    cctx.fillText('N',0,-20); cctx.fillText('S',0,22);
+    cctx.fillText('W',-20,4); cctx.fillText('E',20,4);
+    cctx.fillStyle='#ff4444';
+    cctx.beginPath(); cctx.moveTo(0,-24); cctx.lineTo(-5,-10); cctx.lineTo(5,-10); cctx.fill();
+    cctx.restore();
+
+    updateChunks();
+
+    mapUpdateTimer+=delta;
+    if(mapUpdateTimer>0.2){
+        mapUpdateTimer=0;
+        updateMiniMap();
+    }
+
+    renderer.render(scene, camera);
+
+    if(gameState.reachedCheckpoints.has(3) && !gameState.reachedSummit){
+        gameState.reachedSummit=true;
+        showSubtitle('历经千辛万苦,红军终于翻越了夹金山!<br><br>这座被当地藏族同胞称为"神山"的雪山,<br>见证了红军战士钢铁般的意志!');
+    }
+    if(gameState.bodyTemp<33 && !gameState.reachedSummit){
+        if(Math.random()<0.005) showSubtitle('体温过低!快找个避风处休息!');
+    }
+    if(gameState.stamina<8 && !gameState.reachedSummit){
+        if(Math.random()<0.005) showSubtitle('体力不支!需要停下来休息恢复体力!');
+    }
+
+    if(gameState.weatherId==='blizzard'){
+        howlTimer-=delta;
+        if(howlTimer<=0){
+            howlTimer=30+Math.random()*30;
+            playHowl();
+        }
+    }
+    playWind(w.wind);
+}
+
+window.addEventListener('resize', ()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    applyResolution();   // [3K] 按档位 + 自适应缩放
+});
+
+gameState.gameStarted=true;
+setTimeout(()=>{
+    loadingScreen.style.opacity='0';
+    setTimeout(()=>{loadingScreen.style.display='none';}, 1000);
+}, 500);
+
+requestAnimationFrame(animate);
+window.__dbg={gameState,scene,camera,renderer,getTerrainHeight,PERF};
+</script>
+</body>
+</html>
